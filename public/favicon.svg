@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="favThickZ" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="30%" stop-color="#F43F5E"/>
+      <stop offset="65%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="favStar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Clean White Squircle Background -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- Symmetrical Thick Rounded Z (Centered at 32, 32) -->
+  <path d="M 21 19 L 43 19 L 21 45 L 43 45"
+        fill="none"
+        stroke="url(#favThickZ)"
+        stroke-width="9"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Solid Rounded AI Star Sparkle (Top Right - No Hole, Rounded Tips) -->
+  <g transform="translate(50, 14)">
+    <path d="M -1 -4
+             A 1 1 0 0 1 1 -4
+             C 1.2 -1.4, 1.4 -1.2, 4 -1
+             A 1 1 0 0 1 4 1
+             C 1.4 1.2, 1.2 1.4, 1 4
+             A 1 1 0 0 1 -1 4
+             C -1.2 1.4, -1.4 1.2, -4 1
+             A 1 1 0 0 1 -4 -1
+             C -1.4 -1.2, -1.2 -1.4, -1 -4 Z"
+          fill="url(#favStar)"/>
+  </g>
+</svg>

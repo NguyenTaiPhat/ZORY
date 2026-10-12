@@ -1,0 +1,31 @@
+{
+  "name": "ZORY — Nền Tảng Đọc Truyện & Sáng Tác Văn Học AI",
+  "short_name": "ZORY",
+  "description": "Stories Beyond Imagination. Hệ sinh thái đọc truyện trực tuyến, sáng tác truyện với AI Studio và nghe truyện thông minh bằng Text-to-Speech chất lượng cao.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B0A0F",
+  "theme_color": "#0B0A0F",
+  "categories": ["books", "entertainment", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

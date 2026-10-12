@@ -1,0 +1,371 @@
+// Cấu hình PostgreSQL cho Production / Docker
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  username        String           @unique
+  name            String?
+  passwordHash    String
+  avatarUrl       String?
+  bio             String?
+  role            String           @default("USER")
+  isBanned        Boolean          @default(false)
+  aiTokensQuota   Int              @default(50000)
+  aiTokensUsed    Int              @default(0)
+  ttsCharsQuota   Int              @default(30000)
+  ttsCharsUsed    Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  preferences     UserPreference?
+  books           Book[]           @relation("AuthorBooks")
+  comments        Comment[]
+  ratings         Rating[]
+  readingProgress ReadingProgress[]
+  libraryItems    LibraryItem[]
+  bookmarks       Bookmark[]
+  notifications   Notification[]
+  reports         Report[]
+  aiProjects      AiProject[]
+  aiUsages        AiUsage[]
+  ttsJobs         TtsJob[]
+  auditLogs       AuditLog[]       @relation("AdminLogs")
+}
+
+model UserPreference {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  theme            String   @default("system")
+  readerTheme      String   @default("light")
+  readerFontSize   Int      @default(18)
+  readerLineHeight Float    @default(1.8)
+  readerFontFamily String   @default("serif")
+  readerWidth      String   @default("medium")
+  autoNextChapter  Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Genre {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  description String?
+  books       BookGenre[]
+}
+
+model Book {
+  id              String            @id @default(cuid())
+  title           String
+  slug            String            @unique
+  summary         String            @db.Text
+  coverUrl        String?
+  status          String            @default("ONGOING")
+  publishStatus   String            @default("PUBLISHED")
+  authorId        String
+  authorName      String?
+  viewCount       Int               @default(0)
+  readCount       Int               @default(0)
+  ratingAvg       Float             @default(5.0)
+  ratingCount     Int               @default(0)
+  isFeatured      Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  author          User              @relation("AuthorBooks", fields: [authorId], references: [id], onDelete: Cascade)
+  genres          BookGenre[]
+  chapters        Chapter[]
+  comments        Comment[]
+  ratings         Rating[]
+  readingProgress ReadingProgress[]
+  libraryItems    LibraryItem[]
+  bookmarks       Bookmark[]
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([publishStatus])
+}
+
+model BookGenre {
+  bookId  String
+  genreId String
+
+  book    Book  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, genreId])
+}
+
+model Chapter {
+  id            String            @id @default(cuid())
+  bookId        String
+  chapterNumber Int
+  title         String
+  content       String            @db.Text
+  wordCount     Int               @default(0)
+  publishStatus String            @default("PUBLISHED")
+  viewCount     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  book          Book              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  progress      ReadingProgress[]
+  bookmarks     Bookmark[]
+  ttsJobs       TtsJob[]
+
+  @@unique([bookId, chapterNumber])
+  @@index([bookId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  bookId    String
+  chapterId String?
+  userId    String
+  content   String   @db.Text
+  isSpoiler Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([bookId])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  bookId    String
+  userId    String
+  score     Int      @default(5)
+  review    String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, userId])
+}
+
+model ReadingProgress {
+  id             String   @id @default(cuid())
+  userId         String?
+  guestId        String?
+  bookId         String
+  chapterId      String
+  progressPercent Float   @default(0)
+  scrollPosition Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book           Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  chapter        Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+  @@index([guestId, bookId])
+}
+
+model LibraryItem {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  category  String   @default("READING")
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  chapterId String
+  title     String?
+  paragraph Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reporterId  String
+  targetType  String
+  targetId    String
+  reason      String   @db.Text
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+}
+
+model AiProject {
+  id               String          @id @default(cuid())
+  userId           String
+  title            String
+  premise          String          @db.Text
+  genre            String
+  writingStyle     String          @default("Văn học hiện đại, giàu cảm xúc, miêu tả chi tiết")
+  targetAudience   String          @default("Mọi lứa tuổi")
+  estimatedLength  String          @default("Tiểu thuyết dài")
+  worldBible       String?         @db.Text
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characters       Character[]
+  outlines         StoryOutline[]
+  studioChapters   StudioChapter[]
+  aiUsages         AiUsage[]
+
+  @@index([userId])
+}
+
+model Character {
+  id            String    @id @default(cuid())
+  projectId     String
+  name          String
+  role          String    @default("Nhân vật chính")
+  appearance    String?   @db.Text
+  personality   String?   @db.Text
+  goals         String?   @db.Text
+  backstory     String?   @db.Text
+  abilities     String?   @db.Text
+  relationships String?   @db.Text
+  secrets       String?   @db.Text
+  currentStatus String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       AiProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model StoryOutline {
+  id              String    @id @default(cuid())
+  projectId       String
+  logline         String?   @db.Text
+  synopsis        String?   @db.Text
+  actsJson        String?   @db.Text
+  chapterListJson String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         AiProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model StudioChapter {
+  id            String    @id @default(cuid())
+  projectId     String
+  chapterNumber Int
+  title         String
+  content       String    @db.Text @default("")
+  summary       String?   @db.Text
+  wordCount     Int       @default(0)
+  status        String    @default("DRAFT")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       AiProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, chapterNumber])
+}
+
+model AiUsage {
+  id               String    @id @default(cuid())
+  userId           String
+  projectId        String?
+  operation        String
+  model            String
+  promptTokens     Int       @default(0)
+  completionTokens Int       @default(0)
+  totalTokens      Int       @default(0)
+  createdAt        DateTime  @default(now())
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project          AiProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+model TtsJob {
+  id           String    @id @default(cuid())
+  userId       String?
+  chapterId    String
+  provider     String    @default("web-speech")
+  voice        String    @default("vi-VN-HoaiMyNeural")
+  speed        Float     @default(1.0)
+  status       String    @default("COMPLETED")
+  audioUrl     String?
+  duration     Float     @default(0)
+  charCount    Int       @default(0)
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  chapter      Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+}
+
+model TtsCache {
+  id          String   @id @default(cuid())
+  contentHash String   @unique
+  provider    String
+  voice       String
+  speed       Float    @default(1.0)
+  audioUrl    String
+  duration    Float    @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String?
+  details    String?  @db.Text
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  admin      User     @relation("AdminLogs", fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime @updatedAt
+}

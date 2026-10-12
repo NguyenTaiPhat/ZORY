@@ -1,0 +1,81 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: ['class'],
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        background: 'var(--background)',
+        surface: 'var(--surface)',
+        'surface-elevated': 'var(--surface-elevated)',
+        primary: {
+          DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
+          secondary: 'var(--primary-secondary)',
+        },
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
+        border: 'var(--border-color)',
+        'border-strong': 'var(--border-strong)',
+        error: 'var(--error-color)',
+        success: 'var(--success-color)',
+      },
+      fontFamily: {
+        sans: [
+          'var(--font-sans)',
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'sans-serif',
+        ],
+        serif: [
+          'var(--font-serif)',
+          'Lora',
+          'Georgia',
+          'Cambria',
+          'serif',
+        ],
+        mono: [
+          'var(--font-sans)',
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'monospace',
+        ],
+        display: [
+          'var(--font-sans)',
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'sans-serif',
+        ],
+      },
+      letterSpacing: {
+        tightest: '-0.035em',
+        tighter: '-0.02em',
+        tight: '-0.011em',
+        normal: '0',
+        wide: '0.025em',
+        wider: '0.05em',
+        widest: '0.08em',
+      },
+      borderRadius: {
+        none: '0',
+        sm: '2px',
+        DEFAULT: '4px',
+        md: '6px',
+        lg: '8px',
+        xl: '12px',
+        '2xl': '16px',
+      },
+    },
+  },
+  plugins: [],
+}
