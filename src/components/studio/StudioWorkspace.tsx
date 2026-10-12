@@ -23,10 +23,14 @@ import {
   List,
   GitBranch,
   RotateCw,
+  RotateCcw,
   AlertTriangle,
   ExternalLink,
   ArrowRight,
   Camera,
+  Edit3,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { cleanAiLiteratureOutput } from '@/lib/ai/cleaner';
 import { formatThousands } from '@/lib/utils';
@@ -162,6 +166,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(null);
   const [customDirection, setCustomDirection] = useState('');
   const [activeDirectionSummary, setActiveDirectionSummary] = useState('');
+  const [expandedDirectionIds, setExpandedDirectionIds] = useState<Record<string, boolean>>({});
 
   const captureSelection = () => {
     const textarea = textareaRef.current;
@@ -343,7 +348,10 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
       if (res.ok && data.directions && Array.isArray(data.directions)) {
         setDirectionOptions(data.directions);
         if (data.directions.length > 0) {
-          setSelectedDirectionId(data.directions[0].id);
+          const first = data.directions[0];
+          setSelectedDirectionId(first.id);
+          setCustomDirection(`${first.title}: ${first.summary}`);
+          setExpandedDirectionIds({ [first.id]: true });
         }
       }
     } catch (err) {
@@ -380,6 +388,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
       setSelectedDirectionId(null);
       setCustomDirection('');
       setActiveDirectionSummary('');
+      setExpandedDirectionIds({});
       fetchDirections();
     } else {
       setAiStep(2);
@@ -1116,9 +1125,10 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
                     {directionOptions.map((opt) => {
-                      const isSelected = selectedDirectionId === opt.id && !customDirection.trim();
+                      const isSelected = selectedDirectionId === opt.id;
+                      const isExpanded = expandedDirectionIds[opt.id] ?? isSelected;
                       const tagColor =
                         opt.tag === 'CAO TRÀO'
                           ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
@@ -1133,9 +1143,10 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                           key={opt.id}
                           onClick={() => {
                             setSelectedDirectionId(opt.id);
-                            setCustomDirection('');
+                            setCustomDirection(`${opt.title}: ${opt.summary}`);
+                            setExpandedDirectionIds((prev) => ({ ...prev, [opt.id]: true }));
                           }}
-                          className={`cursor-pointer p-3.5 border transition space-y-2 flex flex-col justify-between text-left relative ${
+                          className={`cursor-pointer p-3.5 border transition space-y-2.5 flex flex-col justify-between text-left relative ${
                             isSelected
                               ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-xs'
                               : 'border-border bg-surface-elevated hover:border-text-tertiary hover:bg-surface'
@@ -1161,12 +1172,36 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                             <h4 className="font-sans font-bold text-xs text-text-primary leading-snug">
                               {opt.title}
                             </h4>
-                            <p className="text-[11px] font-sans text-text-secondary leading-relaxed line-clamp-4">
+                            <p
+                              className={`text-[11px] font-sans text-text-secondary leading-relaxed ${
+                                isExpanded ? 'whitespace-pre-wrap' : 'line-clamp-4'
+                              }`}
+                            >
                               {opt.summary}
                             </p>
                           </div>
-                          <div className="pt-2 border-t border-border/40 text-[10px] font-mono text-text-tertiary">
-                            Hướng {opt.id}
+
+                          <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[10px] font-mono text-text-tertiary">
+                            <span>Hướng {opt.id}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedDirectionIds((prev) => ({
+                                  ...prev,
+                                  [opt.id]: !isExpanded,
+                                }));
+                              }}
+                              className="text-text-muted hover:text-primary transition flex items-center gap-0.5"
+                              title={isExpanded ? 'Thu gọn tóm tắt' : 'Xem toàn bộ nội dung'}
+                            >
+                              <span>{isExpanded ? 'Thu gọn' : 'Xem hết'}</span>
+                              {isExpanded ? (
+                                <ChevronUp className="w-3 h-3" />
+                              ) : (
+                                <ChevronDown className="w-3 h-3" />
+                              )}
+                            </button>
                           </div>
                         </div>
                       );
@@ -1174,23 +1209,60 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                   </div>
                 )}
 
-                {/* Ô tự phác thảo ý tưởng */}
-                <div className="space-y-1.5 pt-1">
-                  <label className="block text-xs font-mono text-text-secondary">
-                    HOẶC PHÁC THẢO Ý TƯỞNG CỦA RIÊNG BẠN:
-                  </label>
-                  <input
-                    type="text"
+                {/* Ô tự phác thảo hoặc chỉnh sửa thêm ý riêng */}
+                <div className="space-y-1.5 pt-2 border-t border-border/60">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-xs font-mono font-bold text-text-primary flex items-center gap-1.5">
+                      <Edit3 className="w-3.5 h-3.5 text-primary" />
+                      <span>
+                        {selectedDirectionId
+                          ? `TÙY BIẾN / CHỈNH SỬA THÊM Ý RIÊNG CHO HƯỚNG ${selectedDirectionId}:`
+                          : 'HOẶC PHÁC THẢO Ý TƯỞNG CỦA RIÊNG BẠN:'}
+                      </span>
+                    </label>
+                    {selectedDirectionId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const opt = directionOptions.find((d) => d.id === selectedDirectionId);
+                          if (opt) {
+                            setCustomDirection(`${opt.title}: ${opt.summary}`);
+                          }
+                        }}
+                        className="text-[10px] font-sans text-text-muted hover:text-primary transition flex items-center gap-1 shrink-0"
+                        title="Khôi phục lại gợi ý gốc của AI"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Đặt lại ý gốc AI</span>
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    rows={3}
                     value={customDirection}
                     onChange={(e) => {
                       setCustomDirection(e.target.value);
-                      if (e.target.value.trim()) {
-                        setSelectedDirectionId(null);
-                      }
                     }}
-                    placeholder="Ví dụ: Nhân vật giả vờ đầu hàng để tiếp cận tướng địch, sau đó hạ độc..."
-                    className="w-full p-2.5 text-xs font-sans border border-border bg-surface-elevated text-text-primary focus:outline-none focus:border-primary"
+                    placeholder="Bấm chọn 1 hướng ở trên để chỉnh sửa câu chữ, hoặc tự gõ toàn bộ ý tưởng theo ý bạn tại đây..."
+                    className="w-full p-2.5 text-xs font-sans border border-border bg-surface-elevated text-text-primary focus:outline-none focus:border-primary resize-y leading-relaxed"
                   />
+                  <div className="flex items-center justify-between text-[10px] font-sans text-text-tertiary">
+                    <span>
+                      💡 Bạn có thể xem trọn vẹn văn bản ở trên hoặc thoải mái thêm thắt ý riêng vào ô này; AI sẽ viết bám sát 100% nội dung bạn đã chỉnh sửa.
+                    </span>
+                    {customDirection.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomDirection('');
+                          setSelectedDirectionId(null);
+                        }}
+                        className="text-text-muted hover:text-rose-500 transition shrink-0 ml-2"
+                      >
+                        Xóa ô này
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Footer hành động Bước 1 */}
