@@ -7,8 +7,8 @@ export default function ExploreLoading() {
       {/* Header & Filter Controls Skeleton */}
       <div className="space-y-4">
         <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-8 sm:h-10 w-72" />
-        <Skeleton className="h-4 w-96 max-w-full" />
+        <Skeleton className="h-8 sm:h-10 w-full max-w-sm" />
+        <Skeleton className="h-4 w-full max-w-md" />
 
         {/* Filter Pills Skeleton */}
         <div className="flex items-center gap-2 overflow-x-auto pt-3 pb-1 no-scrollbar">

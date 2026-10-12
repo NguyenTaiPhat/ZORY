@@ -3,17 +3,17 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function ListenLoading() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8 min-w-0">
       {/* Editorial Header Banner Skeleton */}
       <div className="border border-border bg-surface p-6 sm:p-10 shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-8 space-y-4">
+          <div className="lg:col-span-8 space-y-4 min-w-0">
             <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-52" />
-              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-5 w-52 max-w-[70%]" />
+              <Skeleton className="h-4 w-20 shrink-0" />
             </div>
 
-            <Skeleton className="h-9 sm:h-10 w-96 max-w-full" />
+            <Skeleton className="h-9 sm:h-10 w-full max-w-md" />
             <Skeleton className="h-4 w-full max-w-xl" />
             <Skeleton className="h-4 w-4/5 max-w-lg" />
 

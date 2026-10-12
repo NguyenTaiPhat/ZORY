@@ -10,7 +10,7 @@ export default function NewStudioProjectLoading() {
         <div className="space-y-1.5 pb-4 border-b border-border">
           <Skeleton className="h-3 w-32" />
           <Skeleton className="h-7 sm:h-8 w-64 max-w-full" />
-          <Skeleton className="h-4 w-96 max-w-full" />
+          <Skeleton className="h-4 w-full max-w-md" />
         </div>
 
         {/* AI Prompt Box Skeleton */}
