@@ -5,6 +5,43 @@ import prisma from '@/lib/db';
 import { cleanAiLiteratureOutput } from '@/lib/ai/cleaner';
 import { getUserAiQuota, consumeUserAiTokens } from '@/lib/ai/quota';
 
+function parseAiDirections(rawContent: string) {
+  try {
+    const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((item: any, idx: number) => ({
+          id: item.id || String.fromCharCode(65 + idx),
+          tag: item.tag || (idx === 0 ? 'CAO TRÀO' : idx === 1 ? 'BÍ ẨN' : 'TÂM LÝ'),
+          title: item.title || `Hướng đi ${idx + 1}`,
+          summary: item.summary || item.description || '',
+        }));
+      }
+    }
+  } catch {}
+  return [
+    {
+      id: 'A',
+      tag: 'CAO TRÀO',
+      title: 'Bộc lộ chân tướng & Quyết chiến',
+      summary: 'Nhân vật phát hiện cạm bẫy của đối phương và chủ động tung đòn phản kích dồn dập, đẩy xung đột lên đỉnh điểm căng thẳng.',
+    },
+    {
+      id: 'B',
+      tag: 'BÍ ẨN',
+      title: 'Phát hiện manh mối & Rút lui',
+      summary: 'Nhân vật tình cờ tìm thấy một cổ vật hoặc ký hiệu bí mật giữa đống đổ nát, quyết định ẩn thân thoái lui để điều tra.',
+    },
+    {
+      id: 'C',
+      tag: 'TÂM LÝ',
+      title: 'Đấu trí & Thỏa hiệp ngầm',
+      summary: 'Thay vì giao tranh trực diện, nhân vật mở lời đàm phán thăm dò động cơ của đối phương, gài bẫy tâm lý sâu sắc.',
+    },
+  ];
+}
+
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
@@ -29,12 +66,13 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const {
-      operation, // CONTINUE, REWRITE, SUMMARIZE, OUTLINE, CHARACTER, PROMPT
+      operation, // CONTINUE, SUGGEST_DIRECTIONS, REWRITE, SUMMARIZE, OUTLINE, CHARACTER, PROMPT
       prompt,
       systemPrompt,
       projectId,
       selectedText,
       instruction,
+      directionSummary,
       length = 'epic', // 'short' (~500 từ) | 'standard' (~1200 từ) | 'detailed' (~2000 từ) | 'epic' (~2500 - 3500 từ)
     } = body;
 
@@ -62,8 +100,48 @@ export async function POST(req: Request) {
 
     let constructedPrompt = prompt || '';
 
-    if (operation === 'CONTINUE') {
-      constructedPrompt = `Nhiệm vụ: Viết tiếp diễn biến tiếp theo của tác phẩm một cách tự nhiên, cuốn hút, điện ảnh và liền mạch.\n${lengthInstruction}\n\nĐOẠN TRƯỚC ĐÓ:\n${selectedText || prompt}\n\nYêu cầu bổ sung từ tác giả: ${instruction || 'Duy trì nhịp điệu và phong cách văn học đỉnh cao.'}\nLưu ý: Bắt đầu viết tiếp nội dung ngay lập tức, tuyệt đối không viết lời dẫn hay câu chào.`;
+    if (operation === 'SUGGEST_DIRECTIONS') {
+      targetTokens = 600;
+      constructedPrompt = `Nhiệm vụ: Bạn là chuyên gia biên kịch văn học đồng hành cùng tác giả (AI Co-Writer).
+Hãy phân tích đoạn kết gần nhất của tác phẩm và đề xuất chính xác 3 hướng phát triển tình tiết tiếp theo (3 Narrative Directions).
+
+QUY TẮC BẮT BUỘC:
+1. Thẻ A: CAO TRÀO / XUNG ĐỘT (Đối đầu trực tiếp, biến cố bất ngờ, nhịp dồn dập).
+2. Thẻ B: BÍ ẨN / MANH MỐI (Phát hiện manh mối, xoay chuyển cục diện, toan tính mưu lược).
+3. Thẻ C: TÂM LÝ / CHIỀU SÂU (Đấu trí, phát triển nội tâm, rèn luyện hoặc gắn kết nhân vật).
+
+BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON MẢNG 3 PHẦN TỬ (không viết thêm lời dẫn nào ngoài JSON):
+[
+  {
+    "id": "A",
+    "tag": "CAO TRÀO",
+    "title": "Tên hướng đi 1 ngắn gọn",
+    "summary": "Tóm tắt 2-3 câu về biến cố và hành động cụ thể của nhân vật."
+  },
+  {
+    "id": "B",
+    "tag": "BÍ ẨN",
+    "title": "Tên hướng đi 2 ngắn gọn",
+    "summary": "Tóm tắt 2-3 câu..."
+  },
+  {
+    "id": "C",
+    "tag": "TÂM LÝ",
+    "title": "Tên hướng đi 3 ngắn gọn",
+    "summary": "Tóm tắt 2-3 câu..."
+  }
+]
+
+ĐOẠN TRÍCH GẦN NHẤT CỦA BẢN THẢO:
+"""
+${selectedText || prompt || ''}
+"""`;
+    } else if (operation === 'CONTINUE') {
+      const directionDirective = directionSummary
+        ? `\n\n[HƯỚNG ĐI ĐÃ ĐƯỢC TÁC GIẢ PHÊ DUYỆT - BẮT BUỘC BÁM SÁT 100%]:\n"${directionSummary}"\nCHỈ DẪN NGHIÊM NGẶT: Bạn bắt buộc phải triển khai câu văn bám sát 100% dàn ý hướng đi này, tuyệt đối không được tự ý thay đổi mạch truyện hay bẻ lái ngoài ý đồ tác giả.\n`
+        : '';
+
+      constructedPrompt = `Nhiệm vụ: Viết tiếp diễn biến tiếp theo của tác phẩm một cách tự nhiên, cuốn hút, điện ảnh và liền mạch.\n${lengthInstruction}${directionDirective}\n\nĐOẠN TRƯỚC ĐÓ:\n${selectedText || prompt}\n\nYêu cầu bổ sung từ tác giả: ${instruction || 'Duy trì nhịp điệu và phong cách văn học đỉnh cao.'}\nLưu ý: Bắt đầu viết tiếp nội dung ngay lập tức, tuyệt đối không viết lời dẫn hay câu chào.`;
     } else if (operation === 'REWRITE') {
       const sourceText = selectedText || prompt;
       const approxWords = sourceText ? sourceText.trim().split(/\s+/).length : 200;
@@ -160,15 +238,17 @@ BỘ NGUYÊN TẮC VĂN HỌC ĐỈNH CAO:
    - KHÔNG viết lời chúc hay lời kết xã giao ở cuối.${loreContext}`;
 
     const isRewrite = operation === 'REWRITE';
+    const isSuggestDirections = operation === 'SUGGEST_DIRECTIONS';
     const aiRes = await aiAdapter.complete({
       prompt: constructedPrompt,
       systemPrompt: systemPrompt ? `${baseSystemPrompt}\n${systemPrompt}` : baseSystemPrompt,
       maxTokens: targetTokens,
-      temperature: isRewrite ? 0.35 : 0.75,
+      temperature: isRewrite ? 0.35 : isSuggestDirections ? 0.6 : 0.75,
     });
 
     // Tự động cắt gọt toàn bộ lời dẫn đầu, lời kết và ký hiệu thừa
-    const finalContent = cleanAiLiteratureOutput(aiRes.content);
+    const finalContent = isSuggestDirections ? aiRes.content : cleanAiLiteratureOutput(aiRes.content);
+    const directions = isSuggestDirections ? parseAiDirections(aiRes.content) : undefined;
 
     // 2. Khấu trừ token và cập nhật chu kỳ 5h
     const updatedQuota = await consumeUserAiTokens(user.id, aiRes.tokensUsed);
@@ -189,6 +269,7 @@ BỘ NGUYÊN TẮC VĂN HỌC ĐỈNH CAO:
     return NextResponse.json({
       success: true,
       content: finalContent,
+      directions,
       model: aiRes.model,
       tokensUsed: aiRes.tokensUsed,
       remainingTokens: updatedQuota.remaining,
