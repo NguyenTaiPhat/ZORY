@@ -514,8 +514,8 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
     <>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 min-w-0 max-w-full overflow-x-hidden">
       {/* Workbench Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-4 border-b border-border min-w-0 max-w-full">
-        <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 max-w-full">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 pb-4 border-b border-border min-w-0 max-w-full">
+        <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
           <Link
             href="/studio"
             className="p-2 border border-border bg-surface hover:bg-surface-elevated text-text-secondary hover:text-text-primary transition shrink-0 mt-0.5 sm:mt-0"
@@ -535,40 +535,40 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
         </div>
 
         {/* Tab Switcher & Actions */}
-        <div className="flex items-center justify-start sm:justify-end gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto min-w-0 max-w-full pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full xl:w-auto min-w-0 max-w-full pb-1">
           <div className="flex items-center gap-1 border border-border p-1 bg-surface text-xs font-sans font-medium shrink-0">
             <button
               onClick={() => setActiveTab('editor')}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 transition text-xs ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 transition text-xs shrink-0 ${
                 activeTab === 'editor'
                   ? 'bg-text-primary text-background font-bold'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>BIÊN SOẠN</span>
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-nowrap">BIÊN SOẠN</span>
             </button>
             <button
               onClick={() => setActiveTab('world')}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 transition text-xs ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 transition text-xs shrink-0 ${
                 activeTab === 'world'
                   ? 'bg-text-primary text-background font-bold'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              <Globe className="w-3.5 h-3.5" />
-              <span>WORLD BIBLE</span>
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-nowrap">WORLD BIBLE</span>
             </button>
             <button
               onClick={() => setActiveTab('characters')}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 transition text-xs ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 transition text-xs shrink-0 ${
                 activeTab === 'characters'
                   ? 'bg-text-primary text-background font-bold'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>LOREBOOK & SƠ ĐỒ</span>
+              <Users className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-nowrap">LOREBOOK & SƠ ĐỒ</span>
             </button>
           </div>
 
