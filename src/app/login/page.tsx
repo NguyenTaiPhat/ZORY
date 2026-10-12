@@ -60,19 +60,6 @@ function LoginForm() {
         </p>
       </div>
 
-      {/* Demo Accounts Callout */}
-      <div className="p-4 border border-border bg-surface-elevated text-xs space-y-1 font-mono">
-        <p className="font-bold text-primary uppercase">[Tài khoản thử nghiệm]</p>
-        <p className="text-text-secondary">
-          • Quản trị: <span className="text-text-primary font-semibold">admin@zory.vn</span> / <span>admin123</span>
-        </p>
-        <p className="text-text-secondary">
-          • Tác giả: <span className="text-text-primary font-semibold">author@zory.vn</span> / <span>author123</span>
-        </p>
-        <p className="text-text-secondary">
-          • Độc giả: <span className="text-text-primary font-semibold">reader@zory.vn</span> / <span>reader123</span>
-        </p>
-      </div>
 
       {error && (
         <div className="p-3 border border-error/40 bg-error/10 text-error text-xs font-mono">
@@ -91,7 +78,7 @@ function LoginForm() {
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="admin@zory.vn"
+              placeholder="email@example.com"
               className="w-full pl-10 pr-4 py-2.5 text-xs font-mono bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary"
               required
             />
