@@ -105,6 +105,28 @@ export async function POST(
       });
     }
 
+    if (!targetBook) {
+      targetBook = await prisma.book.findFirst({
+        where: {
+          authorId: user.id,
+          title: project.title,
+        },
+      });
+    }
+
+    if (!targetBook) {
+      const expectedSlug = slugifyVi(project.title);
+      targetBook = await prisma.book.findFirst({
+        where: {
+          authorId: user.id,
+          OR: [
+            { slug: expectedSlug },
+            { slug: { startsWith: `${expectedSlug}-` } },
+          ],
+        },
+      });
+    }
+
     const defaultCover =
       GENRE_COVER_MAP[project.genre] ||
       GENRE_COVER_MAP[genreName] ||
@@ -161,8 +183,17 @@ export async function POST(
       let publishedCount = 0;
       for (const sc of project.studioChapters) {
         const words = sc.content ? sc.content.trim().split(/\s+/).length : 0;
-        const isDraft = sc.status === 'DRAFT' || sc.status === 'HIDDEN';
-        const pubStatus = isDraft ? 'DRAFT' : 'PUBLISHED';
+        const hasContent = sc.content && sc.content.trim().length > 30;
+
+        let pubStatus = 'DRAFT';
+        if (sc.status === 'PUBLISHED') {
+          pubStatus = 'PUBLISHED';
+        } else if (sc.status === 'HIDDEN') {
+          pubStatus = 'DRAFT';
+        } else {
+          pubStatus = hasContent ? 'PUBLISHED' : 'DRAFT';
+        }
+
         if (pubStatus === 'PUBLISHED') publishedCount++;
 
         await prisma.chapter.upsert({
@@ -200,10 +231,14 @@ export async function POST(
 
       let publishedCount = 0;
       const chaptersToCreate = project.studioChapters.map((sc, index) => {
-        const isDraft = sc.status === 'DRAFT' || sc.status === 'HIDDEN';
-        let pubStatus = isDraft ? 'DRAFT' : 'PUBLISHED';
-        if (index === 0 && isDraft && sc.content) {
+        const hasContent = sc.content && sc.content.trim().length > 30;
+        let pubStatus = 'DRAFT';
+        if (sc.status === 'PUBLISHED') {
           pubStatus = 'PUBLISHED';
+        } else if (sc.status === 'HIDDEN') {
+          pubStatus = 'DRAFT';
+        } else {
+          pubStatus = (hasContent || index === 0) ? 'PUBLISHED' : 'DRAFT';
         }
         if (pubStatus === 'PUBLISHED') publishedCount++;
 

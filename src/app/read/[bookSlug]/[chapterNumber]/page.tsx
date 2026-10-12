@@ -60,7 +60,7 @@ export default async function ReadChapterPage({
 
   if (!book) notFound();
 
-  const chapter = await prisma.chapter.findUnique({
+  let chapter = await prisma.chapter.findUnique({
     where: {
       bookId_chapterNumber: {
         bookId: book.id,
@@ -75,6 +75,67 @@ export default async function ReadChapterPage({
       },
     },
   });
+
+  // Tự động kiểm tra và phục hồi nội dung từ StudioChapter nếu nội dung công khai đang rỗng hoặc chưa đồng bộ
+  if (!chapter || !chapter.content || chapter.content.trim() === 'Nội dung đang được cập nhật...' || chapter.wordCount === 0) {
+    const studioChapter = await prisma.studioChapter.findFirst({
+      where: {
+        chapterNumber: num,
+        project: {
+          OR: [
+            { publishedBookId: book.id },
+            { publishedBookSlug: book.slug },
+            { title: book.title },
+          ],
+        },
+      },
+      select: {
+        title: true,
+        content: true,
+        wordCount: true,
+      },
+    });
+
+    if (studioChapter && studioChapter.content && studioChapter.content.trim().length > 30) {
+      const words = studioChapter.wordCount || studioChapter.content.trim().split(/\s+/).length;
+      if (chapter) {
+        chapter = await prisma.chapter.update({
+          where: { id: chapter.id },
+          data: {
+            title: studioChapter.title || chapter.title,
+            content: studioChapter.content,
+            wordCount: words,
+            publishStatus: 'PUBLISHED',
+          },
+          include: {
+            book: {
+              select: {
+                authorId: true,
+              },
+            },
+          },
+        });
+      } else {
+        chapter = await prisma.chapter.create({
+          data: {
+            bookId: book.id,
+            chapterNumber: num,
+            title: studioChapter.title,
+            content: studioChapter.content,
+            wordCount: words,
+            publishStatus: 'PUBLISHED',
+          },
+          include: {
+            book: {
+              select: {
+                authorId: true,
+              },
+            },
+          },
+        });
+      }
+    }
+  }
 
   if (!chapter) notFound();
 

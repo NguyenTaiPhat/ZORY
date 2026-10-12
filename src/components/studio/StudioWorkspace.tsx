@@ -67,12 +67,15 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
     try {
       const currentChs = [...chapters];
       if (currentChs[activeChapterIndex]) {
+        const isHidden = currentChapter.status === 'HIDDEN';
+        const hasContent = chapterContent.trim().length > 30;
+        const chapterStatus = isHidden ? 'HIDDEN' : hasContent ? 'PUBLISHED' : 'DRAFT';
         currentChs[activeChapterIndex] = {
           ...currentChapter,
           title: chapterTitle,
           content: chapterContent,
           wordCount,
-          status: currentChapter.status || 'DRAFT',
+          status: chapterStatus,
         };
       }
       await fetch(`/api/studio/projects/${project.id}`, {
@@ -102,6 +105,17 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
         publishedBookId: data.bookId,
         publishedBookSlug: slug,
       }));
+      setChapters((prev) =>
+        prev.map((c) => ({
+          ...c,
+          status:
+            c.status === 'HIDDEN'
+              ? 'HIDDEN'
+              : c.content && c.content.trim().length > 30
+              ? 'PUBLISHED'
+              : c.status || 'DRAFT',
+        }))
+      );
     } catch (err: any) {
       setPublishError(err.message || 'Không thể xuất bản tác phẩm');
     } finally {
@@ -129,7 +143,19 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   };
 
   // Chapter Editor States
-  const [chapters, setChapters] = useState<any[]>(project.studioChapters || []);
+  const [chapters, setChapters] = useState<any[]>(() => {
+    return (project.studioChapters || []).map((ch: any) => ({
+      ...ch,
+      status:
+        ch.status === 'HIDDEN'
+          ? 'HIDDEN'
+          : ch.status === 'PUBLISHED'
+          ? 'PUBLISHED'
+          : ch.content && ch.content.trim().length > 30
+          ? 'PUBLISHED'
+          : ch.status || 'DRAFT',
+    }));
+  });
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
   const currentChapter = chapters[activeChapterIndex] || {
     chapterNumber: 1,
@@ -282,12 +308,15 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
 
   const handleSelectChapter = (index: number) => {
     const updatedList = [...chapters];
+    const isHidden = currentChapter.status === 'HIDDEN';
+    const hasContent = chapterContent.trim().length > 30;
+    const chapterStatus = isHidden ? 'HIDDEN' : hasContent ? 'PUBLISHED' : 'DRAFT';
     updatedList[activeChapterIndex] = {
       ...currentChapter,
       title: chapterTitle,
       content: chapterContent,
       wordCount,
-      status: currentChapter.status || 'DRAFT',
+      status: chapterStatus,
     };
     setChapters(updatedList);
     setActiveChapterIndex(index);
@@ -314,9 +343,12 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   };
 
   const handleToggleChapterPublishStatus = async () => {
-    const currentStatus = currentChapter.status || 'DRAFT';
-    const nextStatus =
-      currentStatus === 'DRAFT' || currentStatus === 'HIDDEN' ? 'PUBLISHED' : 'DRAFT';
+    const isCurrentlyPublic =
+      currentChapter.status === 'PUBLISHED' ||
+      (!currentChapter.status && chapterContent.trim().length > 30) ||
+      (currentChapter.status !== 'HIDDEN' && chapterContent.trim().length > 30);
+
+    const nextStatus = isCurrentlyPublic ? 'HIDDEN' : 'PUBLISHED';
 
     const updatedList = [...chapters];
     updatedList[activeChapterIndex] = {
@@ -330,13 +362,21 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
 
     try {
       setIsSaving(true);
-      await fetch(`/api/studio/projects/${project.id}`, {
+      const res = await fetch(`/api/studio/projects/${project.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           updatedChapters: updatedList,
         }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (data?.project?.publishedBookSlug) {
+        setProject((prev: any) => ({
+          ...prev,
+          publishedBookId: data.project.publishedBookId,
+          publishedBookSlug: data.project.publishedBookSlug,
+        }));
+      }
       setSaveMessage(
         nextStatus === 'PUBLISHED'
           ? 'Đã công khai chương'
@@ -392,17 +432,21 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
     setIsSaving(true);
     setSaveMessage('');
     try {
+      const isHidden = currentChapter.status === 'HIDDEN';
+      const hasContent = chapterContent.trim().length > 30;
+      const chapterStatus = isHidden ? 'HIDDEN' : hasContent ? 'PUBLISHED' : 'DRAFT';
+
       const updatedList = [...chapters];
       updatedList[activeChapterIndex] = {
         ...currentChapter,
         title: chapterTitle,
         content: chapterContent,
         wordCount,
-        status: currentChapter.status || 'DRAFT',
+        status: chapterStatus,
       };
       setChapters(updatedList);
 
-      await fetch(`/api/studio/projects/${project.id}`, {
+      const res = await fetch(`/api/studio/projects/${project.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -410,7 +454,20 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
         }),
       });
 
-      setSaveMessage(project.publishedBookSlug ? 'Đã lưu & đồng bộ' : 'Đã lưu bản nháp');
+      const data = await res.json().catch(() => ({}));
+      if (data?.project?.publishedBookSlug) {
+        setProject((prev: any) => ({
+          ...prev,
+          publishedBookId: data.project.publishedBookId,
+          publishedBookSlug: data.project.publishedBookSlug,
+        }));
+      }
+
+      setSaveMessage(
+        project.publishedBookSlug || data?.project?.publishedBookSlug
+          ? 'Đã lưu & đồng bộ truyện'
+          : 'Đã lưu bản nháp'
+      );
       setTimeout(() => setSaveMessage(''), 2500);
     } catch (err) {
       setSaveMessage('Lỗi lưu bản nháp');
@@ -773,7 +830,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                         [{ch.chapterNumber.toString().padStart(2, '0')}] {ch.title}
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {ch.status === 'PUBLISHED' ? (
+                        {ch.status === 'PUBLISHED' || (!ch.status && ch.content && ch.content.trim().length > 30) ? (
                           <span className="text-[9.5px] font-sans font-semibold px-1 py-0.2 rounded-xs border border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
                             Công khai
                           </span>
@@ -896,9 +953,10 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                   onClick={handleSaveChapter}
                   disabled={isSaving}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-text-primary text-background hover:bg-primary hover:text-white border border-border text-xs font-sans font-semibold transition disabled:opacity-40"
+                  title={project.publishedBookSlug ? 'Lưu nội dung và tự động đồng bộ ngay lập tức sang trang đọc truyện' : 'Lưu bản thảo vào Studio'}
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{isSaving ? 'LƯU...' : 'LƯU BẢN NHÁP'}</span>
+                  <span>{isSaving ? 'ĐANG LƯU...' : (project.publishedBookSlug ? 'LƯU & ĐỒNG BỘ TRUYỆN' : 'LƯU BẢN NHÁP')}</span>
                 </button>
               </div>
             </div>
@@ -938,9 +996,9 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                 <span className="font-mono text-[11px] text-text-secondary uppercase">
                   TRẠNG THÁI CHƯƠNG {currentChapter.chapterNumber}:
                 </span>
-                {currentChapter.status === 'DRAFT' ||
-                currentChapter.status === 'HIDDEN' ||
-                !currentChapter.status ? (
+                {currentChapter.status === 'HIDDEN' ||
+                (!currentChapter.status && !chapterContent.trim()) ||
+                (currentChapter.status === 'DRAFT' && !chapterContent.trim()) ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs border border-amber-500/40 bg-amber-500/10 text-amber-500 font-semibold text-[11px]">
                     <EyeOff className="w-3 h-3" />
                     <span>ĐANG ẨN (CHƯA VIẾT XONG / BẢN THẢO)</span>
@@ -958,23 +1016,23 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                   type="button"
                   onClick={handleToggleChapterPublishStatus}
                   className={`inline-flex items-center gap-1.5 px-3 py-1 border text-xs font-semibold transition ${
-                    currentChapter.status === 'DRAFT' ||
                     currentChapter.status === 'HIDDEN' ||
-                    !currentChapter.status
+                    (!currentChapter.status && !chapterContent.trim()) ||
+                    (currentChapter.status === 'DRAFT' && !chapterContent.trim())
                       ? 'border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'
                       : 'border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400'
                   }`}
                   title={
-                    currentChapter.status === 'DRAFT' ||
                     currentChapter.status === 'HIDDEN' ||
-                    !currentChapter.status
+                    (!currentChapter.status && !chapterContent.trim()) ||
+                    (currentChapter.status === 'DRAFT' && !chapterContent.trim())
                       ? 'Bấm để công khai chương này cho độc giả cùng đọc'
                       : 'Bấm để ẩn chương này nếu chưa viết xong'
                   }
                 >
-                  {currentChapter.status === 'DRAFT' ||
-                  currentChapter.status === 'HIDDEN' ||
-                  !currentChapter.status ? (
+                  {currentChapter.status === 'HIDDEN' ||
+                  (!currentChapter.status && !chapterContent.trim()) ||
+                  (currentChapter.status === 'DRAFT' && !chapterContent.trim()) ? (
                     <>
                       <Eye className="w-3.5 h-3.5" />
                       <span>ĐÁNH DẤU CÔNG KHAI</span>
@@ -1112,7 +1170,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                     [{ch.chapterNumber.toString().padStart(2, '0')}] {ch.title}
                   </span>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {ch.status === 'PUBLISHED' ? (
+                    {ch.status === 'PUBLISHED' || (!ch.status && ch.content && ch.content.trim().length > 30) ? (
                       <span className="text-[9.5px] font-sans font-semibold px-1 py-0.2 rounded-xs border border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
                         Công khai
                       </span>

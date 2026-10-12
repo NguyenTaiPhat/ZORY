@@ -83,6 +83,76 @@ export default async function BookDetailPage({
     notFound();
   }
 
+  // Tự động kiểm tra và phục hồi các chương có nội dung từ Studio nếu chưa đồng bộ
+  const studioChapters = await prisma.studioChapter.findMany({
+    where: {
+      project: {
+        OR: [
+          { publishedBookId: book.id },
+          { publishedBookSlug: book.slug },
+          { title: book.title },
+        ],
+      },
+    },
+    select: {
+      chapterNumber: true,
+      title: true,
+      content: true,
+      wordCount: true,
+      status: true,
+    },
+  });
+
+  if (studioChapters.length > 0) {
+    let hasUpdates = false;
+    for (const sc of studioChapters) {
+      if (sc.content && sc.content.trim().length > 30 && sc.status !== 'HIDDEN') {
+        const words = sc.wordCount || sc.content.trim().split(/\s+/).length;
+        const existing = book.chapters.find((c) => c.chapterNumber === sc.chapterNumber);
+        if (!existing || existing.wordCount === 0) {
+          hasUpdates = true;
+          await prisma.chapter.upsert({
+            where: {
+              bookId_chapterNumber: {
+                bookId: book.id,
+                chapterNumber: sc.chapterNumber,
+              },
+            },
+            update: {
+              title: sc.title,
+              content: sc.content,
+              wordCount: words,
+              publishStatus: 'PUBLISHED',
+            },
+            create: {
+              bookId: book.id,
+              chapterNumber: sc.chapterNumber,
+              title: sc.title,
+              content: sc.content,
+              wordCount: words,
+              publishStatus: 'PUBLISHED',
+            },
+          });
+        }
+      }
+    }
+
+    if (hasUpdates) {
+      book.chapters = await prisma.chapter.findMany({
+        where: { bookId: book.id, publishStatus: 'PUBLISHED' },
+        orderBy: { chapterNumber: 'asc' },
+        select: {
+          id: true,
+          chapterNumber: true,
+          title: true,
+          wordCount: true,
+          viewCount: true,
+          createdAt: true,
+        },
+      });
+    }
+  }
+
   // Tăng view count
   await prisma.book.update({
     where: { id: book.id },

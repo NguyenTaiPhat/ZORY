@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { slugifyVi } from '@/lib/utils';
 
 export async function GET(
   req: Request,
@@ -37,6 +38,32 @@ export async function GET(
       return NextResponse.json({ error: 'Không tìm thấy dự án hoặc không có quyền truy cập' }, { status: 404 });
     }
 
+    // Tự động liên kết sách nếu đã xuất bản trước đó nhưng chưa gán id/slug
+    if (!project.publishedBookId || !project.publishedBookSlug) {
+      const expectedSlug = slugifyVi(project.title);
+      const existingBook = await prisma.book.findFirst({
+        where: {
+          OR: [
+            { authorId: user.id, title: project.title },
+            { slug: expectedSlug },
+            { slug: { startsWith: `${expectedSlug}-` } },
+          ],
+        },
+        select: { id: true, slug: true },
+      });
+      if (existingBook) {
+        await prisma.aiProject.update({
+          where: { id: project.id },
+          data: {
+            publishedBookId: existingBook.id,
+            publishedBookSlug: existingBook.slug,
+          },
+        });
+        project.publishedBookId = existingBook.id;
+        project.publishedBookSlug = existingBook.slug;
+      }
+    }
+
     return NextResponse.json({ project });
   } catch (error: any) {
     console.error('Lỗi lấy chi tiết dự án AI:', error);
@@ -65,6 +92,28 @@ export async function PATCH(
       return NextResponse.json({ error: 'Không tìm thấy dự án' }, { status: 404 });
     }
 
+    // Tự động tìm targetBookId nếu project chưa có publishedBookId
+    let bookIdToSync = project.publishedBookId;
+    let bookSlugToSync = project.publishedBookSlug;
+    if (!bookIdToSync) {
+      const expectedSlug = slugifyVi(project.title);
+      const existingBook = await prisma.book.findFirst({
+        where: {
+          authorId: user.id,
+          OR: [
+            { title: project.title },
+            { slug: expectedSlug },
+            { slug: { startsWith: `${expectedSlug}-` } },
+          ],
+        },
+        select: { id: true, slug: true },
+      });
+      if (existingBook) {
+        bookIdToSync = existingBook.id;
+        bookSlugToSync = existingBook.slug;
+      }
+    }
+
     const updated = await prisma.aiProject.update({
       where: { id },
       data: {
@@ -76,12 +125,14 @@ export async function PATCH(
         estimatedLength: body.estimatedLength !== undefined ? body.estimatedLength : undefined,
         worldBible: body.worldBible !== undefined ? body.worldBible : undefined,
         coverUrl: body.coverUrl !== undefined ? body.coverUrl : undefined,
+        publishedBookId: bookIdToSync || undefined,
+        publishedBookSlug: bookSlugToSync || undefined,
       },
     });
 
-    if (body.coverUrl && project.publishedBookId) {
+    if (body.coverUrl && bookIdToSync) {
       await prisma.book.update({
-        where: { id: project.publishedBookId },
+        where: { id: bookIdToSync },
         data: { coverUrl: body.coverUrl },
       });
     }
@@ -99,7 +150,16 @@ export async function PATCH(
 
       for (const ch of body.updatedChapters) {
         const words = ch.content ? ch.content.trim().split(/\s+/).length : 0;
-        const status = ch.status || 'DRAFT';
+        const hasContent = ch.content && ch.content.trim().length > 30;
+
+        let status = 'DRAFT';
+        if (ch.status === 'PUBLISHED') {
+          status = 'PUBLISHED';
+        } else if (ch.status === 'HIDDEN') {
+          status = 'HIDDEN';
+        } else {
+          status = hasContent ? 'PUBLISHED' : 'DRAFT';
+        }
 
         await prisma.studioChapter.upsert({
           where: {
@@ -128,23 +188,32 @@ export async function PATCH(
       }
 
       // Nếu tác phẩm ĐÃ XUẤT BẢN -> tự động đồng bộ sang tác phẩm công khai
-      if (project.publishedBookId) {
+      if (bookIdToSync) {
         await prisma.chapter.deleteMany({
           where: {
-            bookId: project.publishedBookId,
+            bookId: bookIdToSync,
             chapterNumber: { gt: body.updatedChapters.length },
           },
         });
 
         for (const ch of body.updatedChapters) {
           const words = ch.content ? ch.content.trim().split(/\s+/).length : 0;
-          const isDraft = ch.status === 'DRAFT' || ch.status === 'HIDDEN';
-          const pubStatus = isDraft ? 'DRAFT' : 'PUBLISHED';
+          const hasContent = ch.content && ch.content.trim().length > 30;
+
+          let pubStatus = 'DRAFT';
+          if (ch.status === 'PUBLISHED') {
+            pubStatus = 'PUBLISHED';
+          } else if (ch.status === 'HIDDEN') {
+            pubStatus = 'DRAFT';
+          } else {
+            // Mặc định: có nội dung thực tế -> PUBLISHED; chưa có nội dung (dự thảo/0 từ) -> DRAFT
+            pubStatus = hasContent ? 'PUBLISHED' : 'DRAFT';
+          }
 
           await prisma.chapter.upsert({
             where: {
               bookId_chapterNumber: {
-                bookId: project.publishedBookId,
+                bookId: bookIdToSync,
                 chapterNumber: ch.chapterNumber,
               },
             },
@@ -155,7 +224,7 @@ export async function PATCH(
               publishStatus: pubStatus,
             },
             create: {
-              bookId: project.publishedBookId,
+              bookId: bookIdToSync,
               chapterNumber: ch.chapterNumber,
               title: ch.title,
               content: ch.content || 'Nội dung đang được cập nhật...',
