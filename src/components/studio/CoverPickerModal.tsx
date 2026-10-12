@@ -3,7 +3,6 @@
 import React, { useState, useRef } from 'react';
 import {
   Upload,
-  Sparkles,
   Link2,
   Check,
   X,
@@ -23,44 +22,18 @@ interface CoverPickerModalProps {
   onSave: (newCoverUrl: string) => Promise<void> | void;
 }
 
-const PRESET_COVERS = [
-  {
-    name: 'Đô Thị Viễn Tưởng',
-    url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=600',
-  },
-  {
-    name: 'Trăng Nhân Tạo & Neon',
-    url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600',
-  },
-  {
-    name: 'Vũ Trụ & Tương Lai',
-    url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600',
-  },
-  {
-    name: 'Huyền Bí Đêm Trăng',
-    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600',
-  },
-];
-
 export function CoverPickerModal({
   isOpen,
   onClose,
   currentCoverUrl,
   bookTitle,
-  genre,
   projectId,
   bookSlug,
   onSave,
 }: CoverPickerModalProps) {
-  const [selectedUrl, setSelectedUrl] = useState<string>(
-    currentCoverUrl || PRESET_COVERS[0].url
-  );
-  const [activeTab, setActiveTab] = useState<'upload' | 'ai' | 'url' | 'presets'>('upload');
+  const [selectedUrl, setSelectedUrl] = useState<string>(currentCoverUrl || '');
+  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
-  const [isAiGenerating, setIsAiGenerating] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState(
-    `${bookTitle}, ${genre}, futuristic cyberpunk metropolis at night with glowing artificial moons, cinematic book cover art`
-  );
   const [customUrlInput, setCustomUrlInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -101,23 +74,6 @@ export function CoverPickerModal({
       setErrorMsg(err.message || 'Không thể tải ảnh lên');
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const handleGenerateAi = () => {
-    setIsAiGenerating(true);
-    setErrorMsg('');
-    try {
-      const seed = Math.floor(Math.random() * 1000000);
-      const promptEncoded = encodeURIComponent(
-        `${aiPrompt}, ultra-detailed illustration, masterpiece book cover, 8k`
-      );
-      const generatedUrl = `https://image.pollinations.ai/prompt/${promptEncoded}?width=600&height=900&nologo=true&seed=${seed}`;
-      setSelectedUrl(generatedUrl);
-    } catch (err: any) {
-      setErrorMsg('Lỗi sinh ảnh AI');
-    } finally {
-      setTimeout(() => setIsAiGenerating(false), 800);
     }
   };
 
@@ -230,28 +186,6 @@ export function CoverPickerModal({
                 <span>TẢI TỆP LÊN</span>
               </button>
               <button
-                onClick={() => setActiveTab('ai')}
-                className={`flex items-center gap-1.5 pb-2.5 px-3 border-b-2 transition ${
-                  activeTab === 'ai'
-                    ? 'border-primary text-primary font-bold'
-                    : 'border-transparent text-text-secondary hover:text-text-primary'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>AI SINH ẢNH</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('presets')}
-                className={`flex items-center gap-1.5 pb-2.5 px-3 border-b-2 transition ${
-                  activeTab === 'presets'
-                    ? 'border-primary text-primary font-bold'
-                    : 'border-transparent text-text-secondary hover:text-text-primary'
-                }`}
-              >
-                <ImageIcon className="w-3.5 h-3.5" />
-                <span>MẪU CÓ SẴN</span>
-              </button>
-              <button
                 onClick={() => setActiveTab('url')}
                 className={`flex items-center gap-1.5 pb-2.5 px-3 border-b-2 transition ${
                   activeTab === 'url'
@@ -295,73 +229,7 @@ export function CoverPickerModal({
               </div>
             )}
 
-            {/* TAB 2: AI Sinh Ảnh Bìa */}
-            {activeTab === 'ai' && (
-              <div className="space-y-3">
-                <p className="text-xs font-sans text-text-secondary leading-relaxed">
-                  Trợ lý AI sẽ sáng tạo bức họa bìa sách nghệ thuật phù hợp với không khí câu chuyện:
-                </p>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] label-caps text-text-tertiary">
-                    Ý TƯỞNG TRANH BÌA (PROMPT):
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    className="w-full text-xs font-sans p-2.5 bg-surface-elevated border border-border text-text-primary focus:border-primary outline-none resize-none"
-                    placeholder="Mô tả phong cảnh, tông màu, nhân vật..."
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleGenerateAi}
-                  disabled={isAiGenerating}
-                  className="w-full py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold font-sans transition flex items-center justify-center gap-2"
-                >
-                  {isAiGenerating ? (
-                    <>
-                      <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>ĐANG SINH BÌA NGHỆ THUẬT...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>SINH ẢNH BÌA AI MỚI</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* TAB 3: Mẫu có sẵn */}
-            {activeTab === 'presets' && (
-              <div className="grid grid-cols-2 gap-2">
-                {PRESET_COVERS.map((preset) => (
-                  <button
-                    key={preset.url}
-                    type="button"
-                    onClick={() => setSelectedUrl(preset.url)}
-                    className={`p-2 border text-left transition flex items-center gap-2.5 ${
-                      selectedUrl === preset.url
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-surface hover:bg-surface-elevated text-text-secondary'
-                    }`}
-                  >
-                    <img
-                      src={preset.url}
-                      alt={preset.name}
-                      className="w-8 h-12 object-cover rounded-xs shrink-0"
-                    />
-                    <span className="text-xs font-sans font-semibold truncate">
-                      {preset.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* TAB 4: Nhập link URL */}
+            {/* TAB 2: Nhập link URL */}
             {activeTab === 'url' && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
@@ -410,9 +278,9 @@ export function CoverPickerModal({
           </button>
           <button
             type="button"
-            disabled={isSaving || isUploading}
+            disabled={isSaving || isUploading || !selectedUrl}
             onClick={handleConfirmSave}
-            className="px-5 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold font-sans transition flex items-center gap-1.5 shadow-sm"
+            className="px-5 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold font-sans transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
           >
             {isSaving ? (
               <>
