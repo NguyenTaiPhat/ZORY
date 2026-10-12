@@ -16,6 +16,7 @@ import {
   RefreshCw,
   X,
   BookOpen,
+  Heart,
 } from 'lucide-react';
 import { CharacterRelationshipGraph, LoreEntryData } from './CharacterRelationshipGraph';
 
@@ -48,6 +49,8 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
   const [formFaction, setFormFaction] = useState('');
   const [formSummary, setFormSummary] = useState('');
   const [formRelationships, setFormRelationships] = useState('');
+  const [formGender, setFormGender] = useState('NAM');
+  const [formOrientation, setFormOrientation] = useState('');
   const [formSaving, setFormSaving] = useState(false);
 
   const fetchLore = async () => {
@@ -123,6 +126,8 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
     setFormFaction('');
     setFormSummary('');
     setFormRelationships('');
+    setFormGender('NAM');
+    setFormOrientation('');
     setModalOpen(true);
   };
 
@@ -136,13 +141,19 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
     setFormFaction(entry.faction || '');
     setFormSummary(entry.summary);
     let rel = '';
+    let gen = 'NAM';
+    let ori = '';
     if (entry.detailsJson) {
       try {
         const parsed = JSON.parse(entry.detailsJson);
         rel = parsed.relationships || '';
+        if (parsed.gender) gen = parsed.gender;
+        if (parsed.orientation) ori = parsed.orientation;
       } catch {}
     }
     setFormRelationships(rel);
+    setFormGender(gen);
+    setFormOrientation(ori);
     setModalOpen(true);
   };
 
@@ -155,6 +166,14 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
 
     try {
       setFormSaving(true);
+      const detailsPayload: Record<string, any> = {};
+      if (formRelationships.trim()) detailsPayload.relationships = formRelationships.trim();
+      if (formCategory === 'CHARACTER') {
+        if (formGender) detailsPayload.gender = formGender;
+        if (formOrientation.trim()) detailsPayload.orientation = formOrientation.trim();
+      }
+      const finalDetailsJson = Object.keys(detailsPayload).length > 0 ? detailsPayload : null;
+
       if (editingEntry) {
         // PATCH
         const res = await fetch(`/api/studio/projects/${projectId}/lore/${editingEntry.id}`, {
@@ -167,7 +186,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
             realm: formRealm,
             faction: formFaction,
             summary: formSummary,
-            detailsJson: formRelationships ? { relationships: formRelationships } : undefined,
+            detailsJson: finalDetailsJson,
           }),
         });
         if (res.ok) {
@@ -192,7 +211,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
             realm: formRealm,
             faction: formFaction,
             summary: formSummary,
-            detailsJson: formRelationships ? { relationships: formRelationships } : undefined,
+            detailsJson: finalDetailsJson,
           }),
         });
         if (res.ok) {
@@ -413,6 +432,32 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
                         {item.role}
                       </span>
                     )}
+                    {item.category === 'CHARACTER' && (() => {
+                      let gen = '';
+                      let ori = '';
+                      if (item.detailsJson) {
+                        try {
+                          const p = JSON.parse(item.detailsJson);
+                          gen = p.gender;
+                          ori = p.orientation;
+                        } catch {}
+                      }
+                      return (
+                        <>
+                          {gen && (
+                            <span className="px-1.5 py-0.5 bg-surface-elevated text-text-secondary border border-border font-mono text-[10px]">
+                              {gen === 'NAM' ? '♂ Nam' : gen === 'NU' || gen === 'NỮ' ? '♀ Nữ' : gen}
+                            </span>
+                          )}
+                          {ori && (
+                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 font-bold text-[10px] flex items-center gap-1">
+                              <Heart className="w-2.5 h-2.5 fill-primary/30" />
+                              {ori}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                     {item.realm && (
                       <span className="px-1.5 py-0.5 bg-surface-elevated text-text-secondary border border-border font-mono">
                         {item.realm}
@@ -555,17 +600,65 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
               </div>
 
               {formCategory === 'CHARACTER' && (
-                <div>
-                  <label className="block text-text-secondary font-mono mb-1">
-                    MỐI QUAN HỆ VỚI CÁC NHÂN VẬT KHÁC
-                  </label>
-                  <input
-                    type="text"
-                    value={formRelationships}
-                    onChange={(e) => setFormRelationships(e.target.value)}
-                    placeholder="Ví dụ: Sư phụ của Diệp Phong, Kẻ thù của U Minh Giáo..."
-                    className="w-full p-2.5 border border-border bg-surface-elevated text-text-primary"
-                  />
+                <div className="space-y-3 p-3 bg-surface-elevated/50 border border-border">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+                    <Heart className="w-3.5 h-3.5" />
+                    <span>THIẾT LẬP GIỚI TÍNH & ĐỊNH HƯỚNG TÌNH CẢM (CHỐNG LỆCH THỂ LOẠI)</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-text-secondary font-mono text-xs mb-1">
+                        GIỚI TÍNH NHÂN VẬT *
+                      </label>
+                      <select
+                        value={formGender}
+                        onChange={(e) => setFormGender(e.target.value)}
+                        className="w-full p-2 border border-border bg-surface text-text-primary text-xs"
+                      >
+                        <option value="NAM">Nam (♂)</option>
+                        <option value="NỮ">Nữ (♀)</option>
+                        <option value="PHI_NHỊ_GIỚI">Phi nhị giới (Non-binary)</option>
+                        <option value="KHÁC">Khác (Linh thú, Hóa hình...)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-text-secondary font-mono text-xs mb-1">
+                        VAI TRÒ CP / ĐỊNH HƯỚNG TÌNH CẢM
+                      </label>
+                      <input
+                        type="text"
+                        value={formOrientation}
+                        onChange={(e) => setFormOrientation(e.target.value)}
+                        placeholder="Công / Thụ / Hỗ công / Nam chính Đam mỹ..."
+                        list="orientation-presets"
+                        className="w-full p-2 border border-border bg-surface text-text-primary text-xs"
+                      />
+                      <datalist id="orientation-presets">
+                        <option value="Công (Top)" />
+                        <option value="Thụ (Bottom)" />
+                        <option value="Hỗ công (Switch)" />
+                        <option value="Nam chính Đam mỹ" />
+                        <option value="Nữ chính Bách hợp" />
+                        <option value="Dị tính (Ngôn tình)" />
+                        <option value="Độc thân / Vô CP" />
+                      </datalist>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-text-secondary font-mono text-xs mb-1">
+                      MỐI QUAN HỆ VỚI CÁC NHÂN VẬT KHÁC
+                    </label>
+                    <input
+                      type="text"
+                      value={formRelationships}
+                      onChange={(e) => setFormRelationships(e.target.value)}
+                      placeholder="Ví dụ: Người yêu của Sở Hành, Sư tôn của Diệp Phong..."
+                      className="w-full p-2 border border-border bg-surface text-text-primary text-xs"
+                    />
+                  </div>
                 </div>
               )}
 

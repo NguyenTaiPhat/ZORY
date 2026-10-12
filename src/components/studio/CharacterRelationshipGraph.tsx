@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Users, Shield, Zap, Sparkles, BookOpen, ChevronRight, X } from 'lucide-react';
+import { Users, Shield, Zap, Sparkles, BookOpen, ChevronRight, X, Heart } from 'lucide-react';
 
 export interface LoreEntryData {
   id: string;
@@ -55,6 +55,19 @@ export function CharacterRelationshipGraph({
     return [];
   };
 
+  const getCharMeta = (char: LoreEntryData) => {
+    let gender = '';
+    let orientation = '';
+    if (char.detailsJson) {
+      try {
+        const parsed = JSON.parse(char.detailsJson);
+        gender = parsed.gender || '';
+        orientation = parsed.orientation || '';
+      } catch {}
+    }
+    return { gender, orientation };
+  };
+
   const getRoleBadgeColor = (role?: string | null) => {
     const r = (role || '').toLowerCase();
     if (r.includes('chính')) return 'bg-primary text-white border-primary';
@@ -94,6 +107,7 @@ export function CharacterRelationshipGraph({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {characters.map((char) => {
           const relations = getParsedRelations(char);
+          const meta = getCharMeta(char);
           const isSelected = selectedChar?.id === char.id;
 
           return (
@@ -121,13 +135,30 @@ export function CharacterRelationshipGraph({
                       </span>
                     )}
                   </div>
-                  <span
-                    className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm border ${getRoleBadgeColor(
-                      char.role
-                    )}`}
-                  >
-                    {char.role || 'Nhân vật'}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm border ${getRoleBadgeColor(
+                        char.role
+                      )}`}
+                    >
+                      {char.role || 'Nhân vật'}
+                    </span>
+                    {(meta.gender || meta.orientation) && (
+                      <div className="flex items-center gap-1">
+                        {meta.gender && (
+                          <span className="text-[9.5px] font-mono px-1.5 py-0.2 rounded-xs border border-border bg-surface-elevated text-text-secondary">
+                            {meta.gender === 'NAM' ? '♂ Nam' : meta.gender === 'NU' || meta.gender === 'NỮ' ? '♀ Nữ' : meta.gender}
+                          </span>
+                        )}
+                        {meta.orientation && (
+                          <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded-xs border border-primary/30 bg-primary/10 text-primary flex items-center gap-0.5">
+                            <Heart className="w-2.5 h-2.5 fill-primary/30" />
+                            {meta.orientation}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Realm & Faction tags */}
@@ -175,7 +206,9 @@ export function CharacterRelationshipGraph({
       </div>
 
       {/* Selected Character Deep Profile Drawer/Modal */}
-      {selectedChar && (
+      {selectedChar && (() => {
+        const selectedMeta = getCharMeta(selectedChar);
+        return (
         <div className="p-5 border border-primary/40 bg-surface-elevated/90 space-y-4 rounded-sm animate-in fade-in duration-200">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
@@ -192,16 +225,27 @@ export function CharacterRelationshipGraph({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-sans">
-            <div className="space-y-1 p-3 bg-surface border border-border">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-sans">
+            <div className="space-y-1 p-2.5 bg-surface border border-border">
               <span className="text-text-muted font-mono uppercase text-[10px] block">Vai trò</span>
               <strong className="text-text-primary">{selectedChar.role || 'Chưa định nghĩa'}</strong>
             </div>
-            <div className="space-y-1 p-3 bg-surface border border-border">
+            <div className="space-y-1 p-2.5 bg-surface border border-border">
+              <span className="text-text-muted font-mono uppercase text-[10px] block">Giới tính & Định hướng</span>
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="font-bold text-text-primary">
+                  {selectedMeta.gender === 'NAM' ? 'Nam' : selectedMeta.gender === 'NU' || selectedMeta.gender === 'NỮ' ? 'Nữ' : (selectedMeta.gender || 'Chưa rõ')}
+                </span>
+                {selectedMeta.orientation && (
+                  <span className="text-primary font-bold">({selectedMeta.orientation})</span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-1 p-2.5 bg-surface border border-border">
               <span className="text-text-muted font-mono uppercase text-[10px] block">Tu vi / Cảnh giới</span>
               <strong className="text-primary font-mono">{selectedChar.realm || 'Phàm nhân / Không rõ'}</strong>
             </div>
-            <div className="space-y-1 p-3 bg-surface border border-border">
+            <div className="space-y-1 p-2.5 bg-surface border border-border">
               <span className="text-text-muted font-mono uppercase text-[10px] block">Thế lực / Tông môn</span>
               <strong className="text-text-primary">{selectedChar.faction || 'Tự do'}</strong>
             </div>
@@ -228,7 +272,8 @@ export function CharacterRelationshipGraph({
             </div>
           )}
         </div>
-      )}
+      );
+      })()}
     </div>
   );
 }

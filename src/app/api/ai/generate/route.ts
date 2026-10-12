@@ -4,6 +4,7 @@ import { aiAdapter } from '@/lib/ai/adapter';
 import prisma from '@/lib/db';
 import { cleanAiLiteratureOutput } from '@/lib/ai/cleaner';
 import { getUserAiQuota, consumeUserAiTokens } from '@/lib/ai/quota';
+import { buildGenreAndOrientationDirectives, formatCharacterLoreWithOrientation } from '@/lib/ai/genreGuard';
 
 function parseAiDirections(rawContent: string) {
   try {
@@ -70,11 +71,84 @@ export async function POST(req: Request) {
       prompt,
       systemPrompt,
       projectId,
+      projectGenre,
+      projectPremise,
       selectedText,
       instruction,
       directionSummary,
       length = 'epic', // 'short' (~500 từ) | 'standard' (~1200 từ) | 'detailed' (~2000 từ) | 'epic' (~2500 - 3500 từ)
     } = body;
+
+    let dbGenre = projectGenre || '';
+    let dbPremise = projectPremise || '';
+    let loreContext = '';
+
+    // Tự động truy vấn Thông tin Dự Án, Lorebook & Danh sách Nhân Vật
+    if (projectId) {
+      try {
+        const [proj, loreEntries, standaloneChars] = await Promise.all([
+          prisma.aiProject.findUnique({
+            where: { id: projectId },
+            select: { genre: true, premise: true },
+          }),
+          prisma.loreEntry.findMany({
+            where: { projectId },
+            take: 20,
+            orderBy: { createdAt: 'desc' },
+          }),
+          prisma.character.findMany({
+            where: { projectId },
+            take: 15,
+            orderBy: { createdAt: 'asc' },
+          }),
+        ]);
+
+        if (proj) {
+          if (!dbGenre && proj.genre) dbGenre = proj.genre;
+          if (!dbPremise && proj.premise) dbPremise = proj.premise;
+        }
+
+        let charList: string[] = [];
+        if (loreEntries && loreEntries.length > 0) {
+          charList = loreEntries
+            .filter((e) => e.category === 'CHARACTER')
+            .map((e) => formatCharacterLoreWithOrientation(e));
+        }
+
+        // Nếu LoreEntry chưa có nhân vật, lấy từ bảng Character
+        if (charList.length === 0 && standaloneChars && standaloneChars.length > 0) {
+          charList = standaloneChars.map((c) => {
+            const relText = c.relationships ? ` - Mối quan hệ: ${c.relationships}` : '';
+            return `- ${c.name} (${c.role}${c.abilities ? `, Cảnh giới/Năng lực: ${c.abilities}` : ''}): ${c.personality || c.appearance || 'Nhân vật chính'}${relText}`;
+          });
+        }
+
+        const factions = loreEntries
+          ? loreEntries
+              .filter((e) => e.category === 'FACTION')
+              .map((e) => `- ${e.name} (${e.role || 'Thế lực'}): ${e.summary}`)
+              .join('\n')
+          : '';
+        const realms = loreEntries
+          ? loreEntries
+              .filter((e) => e.category === 'REALM')
+              .map((e) => `- ${e.name}: ${e.summary}`)
+              .join('\n')
+          : '';
+
+        if (charList.length > 0 || factions || realms) {
+          loreContext = `\n[TRI THỨC THẾ GIỚI & HỒ SƠ NHÂN VẬT (LOREBOOK)]:
+${charList.length > 0 ? `Nhân vật:\n${charList.join('\n')}\n` : ''}${factions ? `Thế lực / Môn phái:\n${factions}\n` : ''}${
+            realms ? `Hệ thống cảnh giới:\n${realms}\n` : ''
+          }
+QUY TẮC BẮT BUỘC: Giữ đúng 100% tên nhân vật, giới tính, mối quan hệ và thiết lập đã định nghĩa ở trên, tuyệt đối không viết sai lệch lore hay tự tiện đổi giới tính nhân vật.`;
+        }
+      } catch (err) {
+        console.warn('Lỗi lấy Lore & Project context:', err);
+      }
+    }
+
+    const genreDirective = buildGenreAndOrientationDirectives(dbGenre, dbPremise);
 
     let targetTokens = 8192;
     let lengthInstruction =
@@ -104,6 +178,7 @@ export async function POST(req: Request) {
       targetTokens = 600;
       constructedPrompt = `Nhiệm vụ: Bạn là chuyên gia biên kịch văn học đồng hành cùng tác giả (AI Co-Writer).
 Hãy phân tích đoạn kết gần nhất của tác phẩm và đề xuất chính xác 3 hướng phát triển tình tiết tiếp theo (3 Narrative Directions).
+${dbGenre ? `\nTHỂ LOẠI TÁC PHẨM: "${dbGenre}".\n` : ''}${genreDirective}
 
 QUY TẮC BẮT BUỘC:
 1. Thẻ A: CAO TRÀO / XUNG ĐỘT (Đối đầu trực tiếp, biến cố bất ngờ, nhịp dồn dập).
@@ -141,7 +216,7 @@ ${selectedText || prompt || ''}
         ? `\n\n[HƯỚNG ĐI ĐÃ ĐƯỢC TÁC GIẢ PHÊ DUYỆT - BẮT BUỘC BÁM SÁT 100%]:\n"${directionSummary}"\nCHỈ DẪN NGHIÊM NGẶT: Bạn bắt buộc phải triển khai câu văn bám sát 100% dàn ý hướng đi này, tuyệt đối không được tự ý thay đổi mạch truyện hay bẻ lái ngoài ý đồ tác giả.\n`
         : '';
 
-      constructedPrompt = `Nhiệm vụ: Viết tiếp diễn biến tiếp theo của tác phẩm một cách tự nhiên, cuốn hút, điện ảnh và liền mạch.\n${lengthInstruction}${directionDirective}\n\nĐOẠN TRƯỚC ĐÓ:\n${selectedText || prompt}\n\nYêu cầu bổ sung từ tác giả: ${instruction || 'Duy trì nhịp điệu và phong cách văn học đỉnh cao.'}\nLưu ý: Bắt đầu viết tiếp nội dung ngay lập tức, tuyệt đối không viết lời dẫn hay câu chào.`;
+      constructedPrompt = `Nhiệm vụ: Viết tiếp diễn biến tiếp theo của tác phẩm một cách tự nhiên, cuốn hút, điện ảnh và liền mạch.\n${dbGenre ? `Thể loại tác phẩm: ${dbGenre}.\n` : ''}${genreDirective}\n${lengthInstruction}${directionDirective}\n\nĐOẠN TRƯỚC ĐÓ:\n${selectedText || prompt}\n\nYêu cầu bổ sung từ tác giả: ${instruction || 'Duy trì nhịp điệu và phong cách văn học đỉnh cao.'}\nLưu ý: Bắt đầu viết tiếp nội dung ngay lập tức, tuyệt đối không viết lời dẫn hay câu chào.`;
     } else if (operation === 'REWRITE') {
       const sourceText = selectedText || prompt;
       const approxWords = sourceText ? sourceText.trim().split(/\s+/).length : 200;
@@ -151,6 +226,7 @@ ${selectedText || prompt || ''}
       constructedPrompt = `Bạn là Chuyên gia Biên tập Văn học Cấp cao (Master Literary Sub-Editor).
 Nhiệm vụ: TRAU CHUỐT, GỌT DŨA CÂU TỪ CHO TỰ NHIÊN, MƯỢT MÀ, GIÀU CHẤT THƠ VÀ ĐIỆN ẢNH.
 TUYỆT ĐỐI KHÔNG REMAKE, KHÔNG BỊA THÊM TÌNH TIẾT MỚI VÀ KHÔNG LÀM THAY ĐỔI CỐT TRUYỆN.
+${dbGenre ? `\nThể loại tác phẩm: ${dbGenre}.\n` : ''}${genreDirective}
 
 QUY TẮC BẮT BUỘC KHI TRAU CHUỐT:
 1. GIỮ NGUYÊN 100% TÌNH TIẾT, HÀNH ĐỘNG VÀ Ý ĐỒ GỐC:
@@ -175,47 +251,8 @@ ${instruction ? `Yêu cầu bổ sung của tác giả: ${instruction}` : ''}`;
       targetTokens = 1500;
     }
 
-    // Tự động truy vấn Lorebook của dự án để AI giữ đúng mạch nhân vật và bối cảnh
-    let loreContext = '';
-    if (projectId) {
-      try {
-        const loreEntries = await prisma.loreEntry.findMany({
-          where: { projectId },
-          take: 15,
-          orderBy: { createdAt: 'desc' },
-        });
-        if (loreEntries.length > 0) {
-          const chars = loreEntries
-            .filter((e) => e.category === 'CHARACTER')
-            .map(
-              (e) =>
-                `- ${e.name} (${e.role || 'Nhân vật'}${e.realm ? `, Cảnh giới: ${e.realm}` : ''}${
-                  e.faction ? `, Môn phái: ${e.faction}` : ''
-                }): ${e.summary}`
-            )
-            .join('\n');
-          const factions = loreEntries
-            .filter((e) => e.category === 'FACTION')
-            .map((e) => `- ${e.name} (${e.role || 'Thế lực'}): ${e.summary}`)
-            .join('\n');
-          const realms = loreEntries
-            .filter((e) => e.category === 'REALM')
-            .map((e) => `- ${e.name}: ${e.summary}`)
-            .join('\n');
-
-          loreContext = `\n[TRI THỨC THẾ GIỚI & NHÂN VẬT (LOREBOOK)]:
-${chars ? `Nhân vật:\n${chars}\n` : ''}${factions ? `Thế lực / Môn phái:\n${factions}\n` : ''}${
-            realms ? `Hệ thống cảnh giới:\n${realms}\n` : ''
-          }
-QUY TẮC: Phải giữ đúng tên nhân vật, cảnh giới, bối cảnh môn phái đã được định nghĩa ở trên, tuyệt đối không viết sai lệch lore.`;
-        }
-      } catch (err) {
-        console.warn('Lỗi lấy Lore context:', err);
-      }
-    }
-
     const baseSystemPrompt = `Bạn là Đại Tác Giả Văn Học & Biên Kịch Trưởng Cấp Cao của ZORY Literary Engine.
-Bạn sáng tác tiểu thuyết với trình độ bậc thầy: câu chữ giàu chất thơ và điện ảnh, tâm lý nhân vật sắc sảo, logic chặt chẽ, tình tiết lớp lang cuốn hút.
+Bạn sáng tác tiểu thuyết với trình độ bậc thầy: câu chữ giàu chất thơ và điện ảnh, tâm lý nhân vật sắc sảo, logic chặt chẽ, tình tiết lớp lang cuốn hút.${genreDirective}
 
 BỘ NGUYÊN TẮC VĂN HỌC ĐỈNH CAO:
 1. NGUYÊN TẮC "SHOW, DON'T TELL" (TẢ CẢNH NGỤ TÌNH THAY VÌ KỂ LỂ):

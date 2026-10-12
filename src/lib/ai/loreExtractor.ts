@@ -3,6 +3,8 @@ import { aiAdapter } from './adapter';
 export interface ExtractedCharacter {
   name: string;
   aliases?: string;
+  gender?: string;
+  orientation?: string;
   role: string;
   faction?: string;
   realm?: string;
@@ -56,17 +58,18 @@ ${sampleText}
 """
 
 NHIỆM VỤ: Hãy quét và trích xuất TOÀN BỘ thực thể quan trọng theo định dạng JSON chuẩn:
-1. characters: Danh sách nhân vật xuất hiện hoặc được nhắc tới (name, aliases, role ["Nhân vật chính", "Phản diện", "Đồng minh", "Tiền bối", "Nhân vật phụ"], faction [Môn phái/Thế lực], realm [Cảnh giới/Tu vi], summary [Mô tả ngắn], relationships [Mối quan hệ ngắn gọn với nhân vật khác]).
+1. characters: Danh sách nhân vật xuất hiện hoặc được nhắc tới (name, aliases, gender ["NAM", "NỮ", "KHÁC"], orientation [Định hướng tình cảm / vai trò CP như "Công", "Thụ", "Hỗ công", "Nam chính Đam mỹ", "Nữ chính Bách hợp", "Dị tính", "Độc thân"], role ["Nhân vật chính", "Phản diện", "Đồng minh", "Tiền bối", "Nhân vật phụ"], faction [Môn phái/Thế lực], realm [Cảnh giới/Tu vi], summary [Mô tả ngắn], relationships [Mối quan hệ ngắn gọn với nhân vật khác]).
 2. factions: Các thế lực, bang phái, gia tộc, đế quốc, cấm địa (name, type ["Tông môn", "Gia tộc", "Thế lực", "Địa danh"], summary [Mô tả vai trò/đặc điểm]).
 3. realms: Hệ thống cảnh giới / cấp bậc tu luyện / ma pháp xuất hiện trong truyện (name, level [số thứ tự 1, 2, 3... từ thấp đến cao], summary).
 4. artifacts: Các bảo vật, bí kíp, pháp khí, linh dược quan trọng (name, type ["Pháp bảo", "Bí kíp", "Thần khí", "Đan dược"], summary).
 
 YÊU CẦU ĐẶC BIỆT:
+- ĐẶC BIỆT CHÚ Ý THỂ LOẠI: Nếu là Đam mỹ (BL / Nam Nam), xác định rõ ràng giới tính cả hai nhân vật chính là NAM, vai trò Công/Thụ. Tuyệt đối không nhầm sang Nữ.
 - Chỉ trả về duy nhất chuỗi JSON hợp lệ. Không viết thêm bất kỳ lời dẫn nào.
 - Định dạng JSON mẫu:
 {
   "characters": [
-    { "name": "...", "aliases": "...", "role": "Nhân vật chính", "faction": "...", "realm": "...", "summary": "...", "relationships": "..." }
+    { "name": "...", "aliases": "...", "gender": "NAM", "orientation": "Công", "role": "Nhân vật chính", "faction": "...", "realm": "...", "summary": "...", "relationships": "..." }
   ],
   "factions": [
     { "name": "...", "type": "Tông môn", "summary": "..." }

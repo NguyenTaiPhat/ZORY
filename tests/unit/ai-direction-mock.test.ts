@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { aiAdapter } from '../../src/lib/ai/adapter.ts';
+import { aiAdapter } from '../../src/lib/ai/adapter';
 
 test('1.1. aiAdapter generateSmartMock trả về 3 hướng đi hợp lệ cho SUGGEST_DIRECTIONS', async () => {
   const result = await aiAdapter.complete({

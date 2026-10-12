@@ -58,6 +58,11 @@ export async function POST(
         where: { projectId: id, name: char.name, category: 'CHARACTER' },
       });
       if (!existing) {
+        const detailsObj: Record<string, any> = {};
+        if (char.relationships) detailsObj.relationships = char.relationships;
+        if (char.gender) detailsObj.gender = char.gender;
+        if (char.orientation) detailsObj.orientation = char.orientation;
+
         const item = await prisma.loreEntry.create({
           data: {
             projectId: id,
@@ -68,7 +73,7 @@ export async function POST(
             faction: char.faction || null,
             realm: char.realm || null,
             summary: char.summary || '',
-            detailsJson: char.relationships ? JSON.stringify({ relationships: char.relationships }) : null,
+            detailsJson: Object.keys(detailsObj).length > 0 ? JSON.stringify(detailsObj) : null,
           },
         });
         createdEntries.push(item);

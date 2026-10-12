@@ -200,6 +200,9 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
           operation: 'PROMPT',
           prompt: `Nhiệm vụ: Bạn là chuyên gia biên kịch tiểu thuyết tương tác. Hãy phân tích đoạn kết sau và đề xuất chính xác 3 ngã rẽ cốt truyện kịch tính tiếp theo (Branching Paths):\n\nĐOẠN KẾT CHƯƠNG:\n"""${chapterContent.slice(-1200) || currentChapter.summary || project.premise}"""\n\nYêu cầu: Viết rõ Nhánh A, Nhánh B, Nhánh C. Mỗi nhánh gồm: Tên lựa chọn hành động + Tóm tắt ngắn biến cố xảy ra theo nhánh đó.`,
           projectId: project.id,
+          projectGenre: project.genre,
+          projectPremise: project.premise,
+          systemPrompt: `Thể loại tác phẩm: ${project.genre}. Đề tài: ${project.premise}.`,
           length: 'standard',
         }),
       });
@@ -331,7 +334,9 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
           operation: 'SUGGEST_DIRECTIONS',
           prompt: chapterContent ? chapterContent.slice(-800) : (currentChapter.summary || project.premise || ''),
           projectId: project.id,
-          systemPrompt: `Ngữ cảnh thế giới: ${worldBibleText}. Phong cách: ${project.writingStyle}`,
+          projectGenre: project.genre,
+          projectPremise: project.premise,
+          systemPrompt: `Thể loại tác phẩm: ${project.genre}. Đề tài: ${project.premise}. Ngữ cảnh thế giới: ${worldBibleText}. Phong cách: ${project.writingStyle}`,
         }),
       });
       const data = await res.json();
@@ -419,7 +424,9 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
           directionSummary: activeDirectionSummary,
           length: aiLength,
           projectId: project.id,
-          systemPrompt: `Ngữ cảnh thế giới: ${worldBibleText}. Phong cách: ${project.writingStyle}`,
+          projectGenre: project.genre,
+          projectPremise: project.premise,
+          systemPrompt: `Thể loại tác phẩm: ${project.genre}. Đề tài: ${project.premise}. Ngữ cảnh thế giới: ${worldBibleText}. Phong cách: ${project.writingStyle}`,
         }),
       });
 
