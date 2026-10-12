@@ -60,6 +60,7 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [ttsEngine, setTtsEngine] = useState<'cloud' | 'local'>('cloud');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const currentBlobUrlRef = useRef<string | null>(null);
   const segmentsRef = useRef<SpeechSegment[]>([]);
   const segmentIdxRef = useRef<number>(0);
   const isPlayingRef = useRef<boolean>(false);
@@ -71,6 +72,10 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
       }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -139,7 +144,7 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
     };
   }, [sleepTimerMinutes, isPlaying]);
 
-  const speakCurrentSegment = () => {
+  const speakCurrentSegment = async () => {
     const segs = segmentsRef.current;
     if (segmentIdxRef.current >= segs.length) {
       // Hết chương
@@ -163,10 +168,14 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
     );
     setProgressPercent(percent);
 
-    // Dừng phát âm trước đó
+    // Dừng phát âm trước đó & giải phóng blob url
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
+    }
+    if (currentBlobUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -184,19 +193,59 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
 
     if (shouldUseCloud) {
       const audioUrl = `/api/tts?text=${encodeURIComponent(seg.text)}&lang=vi`;
-      const audio = new Audio(audioUrl);
-      audio.playbackRate = speed;
-      audio.volume = isMuted ? 0 : volume;
-      audioRef.current = audio;
-
-      audio.onended = () => {
+      try {
+        const res = await fetch(audioUrl);
+        if (!res.ok) {
+          throw new Error(`Cloud TTS error ${res.status}`);
+        }
         if (!isPlayingRef.current) return;
-        segmentIdxRef.current += 1;
-        speakCurrentSegment();
-      };
 
-      audio.onerror = (e) => {
-        console.warn('Lỗi Cloud TTS, chuyển câu tiếp:', e);
+        const blob = await res.blob();
+        if (!isPlayingRef.current) return;
+
+        if (currentBlobUrlRef.current) {
+          URL.revokeObjectURL(currentBlobUrlRef.current);
+        }
+
+        const blobUrl = URL.createObjectURL(blob);
+        currentBlobUrlRef.current = blobUrl;
+
+        const audio = new Audio(blobUrl);
+        audio.playbackRate = speed;
+        audio.volume = isMuted ? 0 : volume;
+        audioRef.current = audio;
+
+        audio.onended = () => {
+          if (currentBlobUrlRef.current === blobUrl) {
+            URL.revokeObjectURL(blobUrl);
+            currentBlobUrlRef.current = null;
+          }
+          if (!isPlayingRef.current) return;
+          segmentIdxRef.current += 1;
+          speakCurrentSegment();
+        };
+
+        audio.onerror = (e) => {
+          if (currentBlobUrlRef.current === blobUrl) {
+            URL.revokeObjectURL(blobUrl);
+            currentBlobUrlRef.current = null;
+          }
+          console.warn('Lỗi Cloud TTS, chuyển câu tiếp:', e);
+          if (!isPlayingRef.current) return;
+          segmentIdxRef.current += 1;
+          if (segmentIdxRef.current < segs.length) {
+            speakCurrentSegment();
+          } else {
+            setIsPlaying(false);
+            isPlayingRef.current = false;
+          }
+        };
+
+        await audio.play().catch((err) => {
+          console.warn('Không thể tự động phát audio Cloud:', err);
+        });
+      } catch (err) {
+        console.warn('Lỗi tải Cloud TTS:', err);
         if (!isPlayingRef.current) return;
         segmentIdxRef.current += 1;
         if (segmentIdxRef.current < segs.length) {
@@ -205,11 +254,7 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
           setIsPlaying(false);
           isPlayingRef.current = false;
         }
-      };
-
-      audio.play().catch((err) => {
-        console.warn('Không thể tự động phát audio Cloud:', err);
-      });
+      }
       return;
     }
 
@@ -250,6 +295,10 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
       audioRef.current.pause();
       audioRef.current = null;
     }
+    if (currentBlobUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -262,6 +311,10 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
+    }
+    if (currentBlobUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -295,6 +348,10 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
       }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();

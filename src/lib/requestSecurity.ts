@@ -168,11 +168,14 @@ export async function validateRequestSecurity(req: Request): Promise<{ valid: bo
   }
 
   // 2. Kiểm tra Request Token
+  const urlObj = new URL(req.url);
   const token =
     req.headers.get('x-request-token') ||
     req.headers.get('x-csrf-token') ||
     req.headers.get('x-zory-token') ||
-    getCookieFromRequest(req, 'zory_req_token');
+    getCookieFromRequest(req, 'zory_req_token') ||
+    urlObj.searchParams.get('token') ||
+    urlObj.searchParams.get('x-request-token');
 
   if (!token) {
     return {
@@ -190,7 +193,9 @@ export async function validateRequestSecurity(req: Request): Promise<{ valid: bo
   const nonce =
     req.headers.get('x-request-nonce') ||
     req.headers.get('x-nonce') ||
-    req.headers.get('x-zory-nonce');
+    req.headers.get('x-zory-nonce') ||
+    urlObj.searchParams.get('nonce') ||
+    urlObj.searchParams.get('x-request-nonce');
 
   if (!nonce) {
     return {

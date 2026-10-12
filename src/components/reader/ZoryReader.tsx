@@ -73,6 +73,7 @@ export function ZoryReader({
   const segmentIdxRef = useRef<number>(0);
   const isSpeakingRef = useRef<boolean>(false);
   const readerAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentBlobUrlRef = useRef<string | null>(null);
 
   // Đồng bộ tiêu đề tab theo tên chương & tên truyện
   useEffect(() => {
@@ -224,7 +225,7 @@ export function ZoryReader({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [prevChapter, nextChapter, book.slug, router]);
 
-  const speakSegment = () => {
+  const speakSegment = async () => {
     const segs = segmentsRef.current;
     if (segmentIdxRef.current >= segs.length) {
       setIsSpeaking(false);
@@ -235,10 +236,14 @@ export function ZoryReader({
     const seg = segs[segmentIdxRef.current];
     setActiveLang(seg.lang);
 
-    // Dừng audio cũ
+    // Dừng audio cũ & giải phóng blob url
     if (readerAudioRef.current) {
       readerAudioRef.current.pause();
       readerAudioRef.current = null;
+    }
+    if (currentBlobUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -250,20 +255,54 @@ export function ZoryReader({
         : [];
     const voice = findBestVoiceForLang(seg.lang, voices);
 
-    // Tiếng Việt không có giọng máy -> Dùng Cloud AI TTS
+    // Tiếng Việt không có giọng máy -> Dùng Cloud AI TTS qua fetch (đính kèm đầy đủ nonce & token)
     if (seg.lang === 'vi-VN' && !voice) {
       const audioUrl = `/api/tts?text=${encodeURIComponent(seg.text)}&lang=vi`;
-      const audio = new Audio(audioUrl);
-      audio.playbackRate = ttsSpeed;
-      readerAudioRef.current = audio;
-
-      audio.onended = () => {
+      try {
+        const res = await fetch(audioUrl);
+        if (!res.ok) {
+          throw new Error(`Cloud TTS error ${res.status}`);
+        }
         if (!isSpeakingRef.current) return;
-        segmentIdxRef.current += 1;
-        speakSegment();
-      };
 
-      audio.onerror = () => {
+        const blob = await res.blob();
+        if (!isSpeakingRef.current) return;
+
+        const blobUrl = URL.createObjectURL(blob);
+        currentBlobUrlRef.current = blobUrl;
+
+        const audio = new Audio(blobUrl);
+        audio.playbackRate = ttsSpeed;
+        readerAudioRef.current = audio;
+
+        audio.onended = () => {
+          if (currentBlobUrlRef.current === blobUrl) {
+            URL.revokeObjectURL(blobUrl);
+            currentBlobUrlRef.current = null;
+          }
+          if (!isSpeakingRef.current) return;
+          segmentIdxRef.current += 1;
+          speakSegment();
+        };
+
+        audio.onerror = () => {
+          if (currentBlobUrlRef.current === blobUrl) {
+            URL.revokeObjectURL(blobUrl);
+            currentBlobUrlRef.current = null;
+          }
+          if (!isSpeakingRef.current) return;
+          segmentIdxRef.current += 1;
+          if (segmentIdxRef.current < segs.length) {
+            speakSegment();
+          } else {
+            setIsSpeaking(false);
+            isSpeakingRef.current = false;
+          }
+        };
+
+        await audio.play().catch(console.warn);
+      } catch (err) {
+        console.warn('Lỗi Cloud TTS, chuyển câu tiếp:', err);
         if (!isSpeakingRef.current) return;
         segmentIdxRef.current += 1;
         if (segmentIdxRef.current < segs.length) {
@@ -272,9 +311,7 @@ export function ZoryReader({
           setIsSpeaking(false);
           isSpeakingRef.current = false;
         }
-      };
-
-      audio.play().catch(console.warn);
+      }
       return;
     }
 
@@ -315,6 +352,10 @@ export function ZoryReader({
         readerAudioRef.current.pause();
         readerAudioRef.current = null;
       }
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
+      }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
@@ -326,6 +367,10 @@ export function ZoryReader({
     if (readerAudioRef.current) {
       readerAudioRef.current.pause();
       readerAudioRef.current = null;
+    }
+    if (currentBlobUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -342,6 +387,10 @@ export function ZoryReader({
       if (readerAudioRef.current) {
         readerAudioRef.current.pause();
         readerAudioRef.current = null;
+      }
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
       }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();

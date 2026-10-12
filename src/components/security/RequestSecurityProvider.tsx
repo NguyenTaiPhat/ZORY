@@ -134,7 +134,9 @@ export function RequestSecurityProvider() {
             if (
               data?.error?.includes('Request Token') ||
               data?.error?.includes('Mã xác thực') ||
-              data?.error?.includes('hết hạn')
+              data?.error?.includes('hết hạn') ||
+              data?.error?.includes('Nonce') ||
+              data?.error?.includes('ngẫu nhiên')
             ) {
               const freshToken = await fetchSecurityToken(true);
               if (freshToken) {
