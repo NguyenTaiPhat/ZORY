@@ -238,6 +238,41 @@ export class AiAdapter {
   private generateSmartMock(prompt: string, systemPrompt?: string): AiResponse {
     const promptLower = prompt.toLowerCase();
 
+    // 0. Gợi ý hướng đi tình tiết (Suggest Directions)
+    if (
+      promptLower.includes('hướng đi') ||
+      promptLower.includes('ngã rẽ') ||
+      promptLower.includes('suggest_directions') ||
+      (systemPrompt && systemPrompt.includes('SUGGEST_DIRECTIONS'))
+    ) {
+      const directions = [
+        {
+          id: 'A',
+          tag: 'CAO TRÀO',
+          title: 'Bộc lộ chân tướng & Quyết chiến',
+          summary: 'Nhân vật phát hiện cạm bẫy của đối phương và chủ động tung đòn phản kích dồn dập, đẩy xung đột lên đỉnh điểm căng thẳng.',
+        },
+        {
+          id: 'B',
+          tag: 'BÍ ẨN',
+          title: 'Phát hiện manh mối & Rút lui',
+          summary: 'Nhân vật tình cờ tìm thấy một cổ vật hoặc ký hiệu bí mật giữa đống đổ nát, quyết định ẩn thân thoái lui để điều tra.',
+        },
+        {
+          id: 'C',
+          tag: 'TÂM LÝ',
+          title: 'Đấu trí & Thỏa hiệp ngầm',
+          summary: 'Thay vì giao tranh trực diện, nhân vật mở lời đàm phán thăm dò động cơ của đối phương, gài bẫy tâm lý sâu sắc.',
+        },
+      ];
+      return {
+        content: JSON.stringify(directions, null, 2),
+        model: 'zory-literary-engine-local',
+        tokensUsed: 160,
+        isMock: true,
+      };
+    }
+
     // 1. Viết tiếp câu chuyện (Continue)
     if (promptLower.includes('viết tiếp') || promptLower.includes('tiếp tục')) {
       return {
