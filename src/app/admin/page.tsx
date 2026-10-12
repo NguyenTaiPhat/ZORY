@@ -59,25 +59,25 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      {/* 6 Metric tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="space-y-6 sm:space-y-8">
+      {/* 6 Metric tiles (Tối ưu responsive di động) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
         {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
             <div
               key={i}
-              className="p-4 border border-border bg-surface space-y-2"
+              className="p-3.5 sm:p-4 border border-border bg-surface flex flex-col justify-between min-h-[92px] sm:min-h-[104px]"
             >
               <div className="flex items-center justify-between">
-                <Icon className="w-4 h-4 text-primary" />
+                <Icon className="w-4 h-4 text-primary shrink-0" />
                 <span className="text-[10px] font-mono text-text-secondary opacity-60">#{i + 1}</span>
               </div>
               <div>
-                <p className="text-xl font-mono font-bold text-text-primary">
+                <p className="text-xl sm:text-2xl font-mono font-bold text-text-primary tracking-tight">
                   {stat.val}
                 </p>
-                <p className="label-caps truncate mt-1">
+                <p className="label-caps truncate mt-1 text-[10px] sm:text-[11px] text-text-secondary">
                   {stat.label}
                 </p>
               </div>
@@ -87,16 +87,16 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Provider Status Terminal Panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* AI Provider Status */}
-        <div className="p-6 border border-border bg-surface space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="label-caps flex items-center gap-2">
-              <Cpu className="w-3.5 h-3.5 text-primary" />
+        <div className="p-4 sm:p-6 border border-border bg-surface space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3 gap-2">
+            <h3 className="label-caps flex items-center gap-2 text-xs">
+              <Cpu className="w-3.5 h-3.5 text-primary shrink-0" />
               <span>AI PROVIDER ADAPTER</span>
             </h3>
             <span
-              className={`px-2 py-0.5 text-[10px] font-mono border ${
+              className={`px-2 py-0.5 text-[9px] sm:text-[10px] font-mono border shrink-0 ${
                 aiStatus.isMock
                   ? 'border-amber-500/40 text-amber-600 bg-amber-500/10'
                   : 'border-emerald-500/40 text-emerald-600 bg-emerald-500/10'
@@ -113,7 +113,7 @@ export default async function AdminDashboardPage() {
             </div>
             <div className="flex justify-between py-1 border-b border-border">
               <span>MÔ HÌNH VẬN HÀNH:</span>
-              <strong className="text-text-primary">{aiStatus.model}</strong>
+              <strong className="text-text-primary truncate max-w-[180px] sm:max-w-none text-right">{aiStatus.model}</strong>
             </div>
             <div className="flex justify-between py-1">
               <span>ĐÃ TIÊU THỤ:</span>
@@ -125,13 +125,13 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* TTS Provider Status */}
-        <div className="p-6 border border-border bg-surface space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="label-caps flex items-center gap-2">
-              <Headphones className="w-3.5 h-3.5 text-primary" />
+        <div className="p-4 sm:p-6 border border-border bg-surface space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3 gap-2">
+            <h3 className="label-caps flex items-center gap-2 text-xs">
+              <Headphones className="w-3.5 h-3.5 text-primary shrink-0" />
               <span>TTS PROVIDER ADAPTER</span>
             </h3>
-            <span className="px-2 py-0.5 text-[10px] font-mono border border-emerald-500/40 text-emerald-600 bg-emerald-500/10">
+            <span className="px-2 py-0.5 text-[9px] sm:text-[10px] font-mono border border-emerald-500/40 text-emerald-600 bg-emerald-500/10 shrink-0">
               WEB SPEECH SYNTHESIS
             </span>
           </div>
@@ -143,7 +143,7 @@ export default async function AdminDashboardPage() {
             </div>
             <div className="flex justify-between py-1 border-b border-border">
               <span>GIỌNG MẶC ĐỊNH:</span>
-              <strong className="text-text-primary">{ttsStatus.defaultVoice}</strong>
+              <strong className="text-text-primary truncate max-w-[180px] sm:max-w-none text-right">{ttsStatus.defaultVoice}</strong>
             </div>
             <div className="flex justify-between py-1">
               <span>ĐÃ TIÊU THỤ:</span>
@@ -156,13 +156,13 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Audit Log Feed */}
-      <div className="p-6 border border-border bg-surface space-y-4">
+      <div className="p-4 sm:p-6 border border-border bg-surface space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
-          <h3 className="label-caps flex items-center gap-2">
-            <Activity className="w-3.5 h-3.5 text-primary" />
-            <span>NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOGS)</span>
+          <h3 className="label-caps flex items-center gap-2 text-xs">
+            <Activity className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="truncate">NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOGS)</span>
           </h3>
-          <span className="text-xs font-mono text-text-secondary">LƯU TRỮ TỰ ĐỘNG</span>
+          <span className="text-[10px] sm:text-xs font-mono text-text-secondary shrink-0">TỰ ĐỘNG</span>
         </div>
 
         {recentLogs.length === 0 ? (
@@ -172,7 +172,7 @@ export default async function AdminDashboardPage() {
             {recentLogs.map((log) => (
               <div
                 key={log.id}
-                className="p-3 border border-border bg-surface-elevated flex items-center justify-between"
+                className="p-2.5 sm:p-3 border border-border bg-surface-elevated flex flex-col sm:flex-row sm:items-center justify-between gap-1"
               >
                 <div>
                   <span className="font-bold text-text-primary">
@@ -180,7 +180,7 @@ export default async function AdminDashboardPage() {
                   </span>
                   <span className="text-text-secondary"> {log.action}</span>
                 </div>
-                <span className="text-[11px] text-text-secondary opacity-70">
+                <span className="text-[10px] sm:text-[11px] text-text-secondary opacity-70">
                   {formatDateVi(log.createdAt)}
                 </span>
               </div>

@@ -56,11 +56,11 @@ export default function AdminBooksPage() {
   };
 
   return (
-    <div className="border border-border bg-surface p-6 sm:p-8 space-y-6">
+    <div className="border border-border bg-surface p-4 sm:p-8 space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
-          <span className="label-caps">MỤC LỤC TÁC PHẨM TOÀN HỆ THỐNG</span>
-          <h2 className="font-serif text-xl font-bold text-text-primary mt-1">
+          <span className="label-caps text-[10px] sm:text-xs">MỤC LỤC TÁC PHẨM TOÀN HỆ THỐNG</span>
+          <h2 className="font-serif text-lg sm:text-xl font-bold text-text-primary mt-0.5">
             Quản Lý Tác Phẩm ({books.length})
           </h2>
         </div>
@@ -69,8 +69,8 @@ export default function AdminBooksPage() {
       {loading ? (
         <div className="py-16 text-center text-xs font-mono text-text-secondary">ĐANG TẢI DỮ LIỆU...</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="w-full min-w-[680px] text-left text-xs font-mono">
             <thead>
               <tr className="border-b border-border text-text-secondary uppercase">
                 <th className="py-3 px-3">ẤN PHẨM</th>

@@ -374,25 +374,25 @@ export default function AdminApiKeysPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* 1. Header & Load Balancer Status Card */}
-      <div className="border border-border bg-surface p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
+      <div className="border border-border bg-surface p-4 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 sm:pb-6 border-b border-border">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono tracking-wider uppercase border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono tracking-wider uppercase border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                ROUND-ROBIN BALANCER ACTIVE
+                ROUND-ROBIN ACTIVE
               </span>
-              <span className="text-xs font-mono text-text-tertiary">
-                TỰ ĐỘNG PHÂN BỐ TẢI & CHỐNG NGHẼN API
+              <span className="text-[10px] sm:text-xs font-mono text-text-tertiary">
+                TỰ ĐỘNG PHÂN BỐ TẢI API
               </span>
             </div>
-            <h2 className="font-serif text-2xl font-bold text-text-primary mt-1">
+            <h2 className="font-serif text-lg sm:text-2xl font-bold text-text-primary mt-1">
               Quản Trị Album & Bộ Khóa API (Load Balancer)
             </h2>
-            <p className="text-sm text-text-secondary mt-0.5">
-              Phân loại API key theo album tháng, tự động xoay vòng cho AI Studio, chuyển đổi tức thì khi gặp 429 Quota Exceeded.
+            <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+              Phân loại API key theo album tháng, tự động xoay vòng cho AI Studio, chuyển đổi tức thì khi gặp 429.
             </p>
           </div>
 
@@ -402,8 +402,8 @@ export default function AdminApiKeysPage() {
               onClick={() => setShowAddAlbumModal(true)}
               className="flex items-center gap-1.5 px-3 py-2 border border-border bg-surface hover:bg-surface-elevated text-xs font-mono text-text-primary transition"
             >
-              <FolderPlus className="w-3.5 h-3.5 text-primary" />
-              <span>+ TẠO ALBUM THÁNG</span>
+              <FolderPlus className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>+ TẠO ALBUM</span>
             </button>
 
             <button
@@ -411,10 +411,10 @@ export default function AdminApiKeysPage() {
                 setShowAddKeyModal(true);
                 setPreTestResult(null);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 border border-primary bg-primary text-background font-mono text-xs font-bold hover:bg-primary/90 transition shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 border border-primary bg-primary text-background font-mono text-xs font-bold hover:bg-primary/90 transition shadow-sm"
             >
-              <Plus className="w-4 h-4" />
-              <span>+ THÊM API KEY</span>
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>+ THÊM KEY</span>
             </button>
 
             <button
@@ -429,7 +429,7 @@ export default function AdminApiKeysPage() {
         </div>
 
         {/* Metric Counter Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 pt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4 pt-4 sm:pt-6">
           <div className="p-3 border border-border bg-surface-elevated/50">
             <span className="text-[11px] font-mono text-text-tertiary uppercase">Tổng Khóa Trong Pool</span>
             <div className="font-mono text-2xl font-bold text-text-primary mt-1">
@@ -600,7 +600,7 @@ export default function AdminApiKeysPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
+            <table className="w-full min-w-[760px] text-left text-xs font-mono">
               <thead className="bg-surface-elevated/60 text-text-tertiary uppercase border-b border-border">
                 <tr>
                   <th className="p-3">TÊN KHÓA &amp; ALBUM</th>
