@@ -435,10 +435,10 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 min-w-0 max-w-full overflow-x-hidden">
       {/* Workbench Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-4 border-b border-border">
-        <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-4 border-b border-border min-w-0 max-w-full">
+        <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 max-w-full">
           <Link
             href="/studio"
             className="p-2 border border-border bg-surface hover:bg-surface-elevated text-text-secondary hover:text-text-primary transition shrink-0 mt-0.5 sm:mt-0"
@@ -458,7 +458,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
         </div>
 
         {/* Tab Switcher & Actions */}
-        <div className="flex items-center justify-between sm:justify-end gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+        <div className="flex items-center justify-start sm:justify-end gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto min-w-0 max-w-full pb-1">
           <div className="flex items-center gap-1 border border-border p-1 bg-surface text-xs font-sans font-medium shrink-0">
             <button
               onClick={() => setActiveTab('editor')}
@@ -552,9 +552,9 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
 
       {/* TAB 1: BIÊN SOẠN CHƯƠNG */}
       {activeTab === 'editor' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start min-w-0 max-w-full">
           {/* Cột trái: Danh sách chương & Cốt truyện (Ẩn trên mobile, hiện trên desktop) */}
-          <div className="hidden lg:block lg:col-span-3 space-y-4">
+          <div className="hidden lg:block lg:col-span-3 space-y-4 min-w-0">
             {/* Tóm tắt cốt truyện tổng thể */}
             <div className="border border-border bg-surface p-3.5 space-y-1.5">
               <div className="flex items-center gap-1.5 text-text-tertiary">
@@ -616,7 +616,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
           </div>
 
           {/* Cột phải: Editor & AI Actions */}
-          <div className="lg:col-span-9 border border-border bg-surface p-4 sm:p-7 space-y-4">
+          <div className="lg:col-span-9 border border-border bg-surface p-3.5 sm:p-7 space-y-4 min-w-0 max-w-full overflow-x-hidden">
             {/* Mobile Chapter Navigation (< lg) */}
             <div className="lg:hidden flex items-center justify-between gap-1.5 p-2 bg-surface-elevated border border-border">
               <button
@@ -653,9 +653,9 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
             </div>
 
             {/* Editor Action Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3.5 border-b border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3.5 border-b border-border min-w-0 max-w-full">
               {/* Row 1: AI Tools */}
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0 max-w-full">
                 <button
                   onClick={() => handleOpenAiModal('CONTINUE')}
                   className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-sans font-semibold transition shadow-sm"
@@ -693,8 +693,8 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
               </div>
 
               {/* Row 2: Word Count & Save */}
-              <div className="flex items-center justify-between sm:justify-end gap-3 font-sans pt-1 sm:pt-0">
-                <span suppressHydrationWarning className="text-[11px] sm:text-xs text-text-secondary">
+              <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 font-sans pt-1 sm:pt-0 min-w-0 max-w-full flex-wrap">
+                <span suppressHydrationWarning className="text-[11px] sm:text-xs text-text-secondary truncate">
                   {formatThousands(wordCount)} từ ({formatThousands(chapterContent.length)} ký tự)
                 </span>
                 {saveMessage && (
@@ -716,7 +716,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
 
             {/* Cốt truyện dự kiến của chương này (nếu có) */}
             {currentChapter.summary && (
-              <div className="p-3 border border-border/80 bg-surface-elevated/70 text-xs font-sans space-y-1">
+              <div className="p-3 border border-border/80 bg-surface-elevated/70 text-xs font-sans space-y-1 min-w-0 max-w-full break-words">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <span className="font-mono text-[10.5px] sm:text-[11px] text-text-tertiary uppercase tracking-wider flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5 text-primary" />
@@ -737,25 +737,25 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                     </button>
                   )}
                 </div>
-                <p className="text-text-secondary leading-relaxed font-serif italic text-xs sm:text-sm">
+                <p className="text-text-secondary leading-relaxed font-serif italic text-xs sm:text-sm break-words">
                   {currentChapter.summary}
                 </p>
               </div>
             )}
 
             {/* Tiêu đề chương */}
-            <div>
+            <div className="min-w-0 max-w-full">
               <input
                 type="text"
                 value={chapterTitle}
                 onChange={(e) => setChapterTitle(e.target.value)}
                 placeholder="Nhập tiêu đề chương..."
-                className="w-full font-serif text-lg sm:text-2xl font-bold bg-transparent border-b border-border focus:border-primary pb-2 text-text-primary focus:outline-none"
+                className="w-full min-w-0 max-w-full font-serif text-lg sm:text-2xl font-bold bg-transparent border-b border-border focus:border-primary pb-2 text-text-primary focus:outline-none"
               />
             </div>
 
             {/* Textarea nội dung */}
-            <div>
+            <div className="min-w-0 max-w-full">
               <textarea
                 ref={textareaRef}
                 value={chapterContent}
@@ -765,7 +765,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                 onMouseUp={handleTextareaSelect}
                 placeholder="Khởi đầu bản thảo tại đây... Từng câu chữ mở ra vũ trụ văn học."
                 rows={16}
-                className="w-full p-3.5 sm:p-5 font-serif text-base sm:text-lg leading-relaxed border border-border bg-surface-elevated text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary reader-content"
+                className="w-full min-w-0 max-w-full box-border p-3 sm:p-5 font-serif text-base sm:text-lg leading-relaxed border border-border bg-surface-elevated text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary reader-content"
               />
             </div>
           </div>

@@ -8,6 +8,8 @@ export async function GET(
 ) {
   try {
     const { id: chapterId } = await params;
+    const { searchParams } = new URL(req.url);
+    const guestId = searchParams.get('guestId');
     const user = await getCurrentUser();
 
     // 1. Lấy tất cả reactions của chương
@@ -44,6 +46,8 @@ export async function GET(
         (reactionsMap[r.paragraphIndex][r.reaction] || 0) + 1;
 
       if (user && r.userId === user.id) {
+        userReactionsMap[r.paragraphIndex] = r.reaction;
+      } else if (!user && guestId && r.guestId === guestId) {
         userReactionsMap[r.paragraphIndex] = r.reaction;
       }
     }

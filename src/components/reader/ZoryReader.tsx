@@ -100,9 +100,20 @@ export function ZoryReader({
     text: string;
   } | null>(null);
 
+  const getGuestId = useCallback(() => {
+    if (typeof window === 'undefined') return 'guest';
+    let gId = localStorage.getItem('zory_guest_id');
+    if (!gId) {
+      gId = 'g_' + Math.random().toString(36).substring(2, 10);
+      localStorage.setItem('zory_guest_id', gId);
+    }
+    return gId;
+  }, []);
+
   const fetchInteractions = useCallback(async () => {
     try {
-      const res = await fetch(`/api/chapters/${chapter.id}/inline-interactions`);
+      const gId = getGuestId();
+      const res = await fetch(`/api/chapters/${chapter.id}/inline-interactions?guestId=${encodeURIComponent(gId)}`);
       if (res.ok) {
         const data = await res.json();
         setInteractions({
@@ -112,13 +123,14 @@ export function ZoryReader({
         });
       }
     } catch {}
-  }, [chapter.id]);
+  }, [chapter.id, getGuestId]);
 
   useEffect(() => {
     fetchInteractions();
   }, [fetchInteractions]);
 
   const handleReact = async (paragraphIndex: number, reaction: string) => {
+    // Optimistic UI update
     setInteractions((prev) => {
       const current = prev.userReactions[paragraphIndex];
       const isRemoving = current === reaction;
@@ -147,11 +159,33 @@ export function ZoryReader({
     });
 
     try {
-      await fetch(`/api/chapters/${chapter.id}/reactions`, {
+      const res = await fetch(`/api/chapters/${chapter.id}/reactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paragraphIndex, reaction }),
+        body: JSON.stringify({
+          paragraphIndex,
+          reaction,
+          guestId: getGuestId(),
+        }),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.reactions) {
+          setInteractions((prev) => ({
+            ...prev,
+            reactions: {
+              ...prev.reactions,
+              [paragraphIndex]: data.reactions,
+            },
+            userReactions: {
+              ...prev.userReactions,
+              [paragraphIndex]: data.currentReaction || '',
+            },
+          }));
+        }
+      } else {
+        fetchInteractions();
+      }
     } catch {
       fetchInteractions();
     }

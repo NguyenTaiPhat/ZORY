@@ -10,27 +10,53 @@ export function validateCsrfOrigin(req: Request): { valid: boolean; reason?: str
 
   const origin = req.headers.get('origin');
   const referer = req.headers.get('referer');
-  const host = req.headers.get('host');
+  const host = (req.headers.get('host') || '').split(':')[0].toLowerCase();
+  const forwardedHost = (req.headers.get('x-forwarded-host') || '').split(':')[0].toLowerCase();
 
-  // Nếu có header Origin (chuẩn của trình duyệt hiện đại cho POST/PUT/PATCH/DELETE)
+  const allowedHosts = new Set<string>([
+    'localhost',
+    '127.0.0.1',
+  ]);
+
+  if (host) allowedHosts.add(host);
+  if (forwardedHost) allowedHosts.add(forwardedHost);
+
+  if (process.env.APP_URL) {
+    try {
+      allowedHosts.add(new URL(process.env.APP_URL).hostname.toLowerCase());
+    } catch (_) {}
+  }
+
+  if (process.env.VERCEL_URL) {
+    try {
+      const vUrl = process.env.VERCEL_URL.startsWith('http')
+        ? process.env.VERCEL_URL
+        : `https://${process.env.VERCEL_URL}`;
+      allowedHosts.add(new URL(vUrl).hostname.toLowerCase());
+    } catch (_) {}
+  }
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    try {
+      const pUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL.startsWith('http')
+        ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+        : `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+      allowedHosts.add(new URL(pUrl).hostname.toLowerCase());
+    } catch (_) {}
+  }
+
+  const isAllowedHost = (hostname: string): boolean => {
+    const h = hostname.toLowerCase();
+    if (allowedHosts.has(h)) return true;
+    if (h.endsWith('.vercel.app')) return true;
+    if (h.endsWith('zory.vn') || h === 'zory.vn') return true;
+    return false;
+  };
+
   if (origin) {
     try {
       const originUrl = new URL(origin);
-      // Danh sách host hợp lệ
-      const allowedHosts = [
-        host?.split(':')[0],
-        'localhost',
-        '127.0.0.1',
-      ].filter(Boolean);
-
-      if (process.env.APP_URL) {
-        try {
-          const appUrl = new URL(process.env.APP_URL);
-          allowedHosts.push(appUrl.hostname);
-        } catch (_) {}
-      }
-
-      if (!allowedHosts.includes(originUrl.hostname)) {
+      if (!isAllowedHost(originUrl.hostname)) {
         return {
           valid: false,
           reason: `Nguồn gốc yêu cầu không được phép (Origin: ${originUrl.hostname})`,
@@ -42,20 +68,7 @@ export function validateCsrfOrigin(req: Request): { valid: boolean; reason?: str
   } else if (referer) {
     try {
       const refererUrl = new URL(referer);
-      const allowedHosts = [
-        host?.split(':')[0],
-        'localhost',
-        '127.0.0.1',
-      ].filter(Boolean);
-
-      if (process.env.APP_URL) {
-        try {
-          const appUrl = new URL(process.env.APP_URL);
-          allowedHosts.push(appUrl.hostname);
-        } catch (_) {}
-      }
-
-      if (!allowedHosts.includes(refererUrl.hostname)) {
+      if (!isAllowedHost(refererUrl.hostname)) {
         return {
           valid: false,
           reason: `Nguồn gốc yêu cầu không được phép (Referer: ${refererUrl.hostname})`,

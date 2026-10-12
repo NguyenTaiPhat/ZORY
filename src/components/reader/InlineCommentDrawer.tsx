@@ -27,6 +27,7 @@ export function InlineCommentDrawer({
   const [newContent, setNewContent] = useState('');
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export function InlineCommentDrawer({
 
     try {
       setSubmitting(true);
+      setSubmitError(null);
       const res = await fetch(`/api/chapters/${chapterId}/paragraphs/${paragraphIndex}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,13 +81,14 @@ export function InlineCommentDrawer({
         setComments((prev) => [data.comment, ...prev]);
         setNewContent('');
         setIsSpoiler(false);
+        setSubmitError(null);
         if (onCommentAdded) onCommentAdded();
       } else {
-        const errData = await res.json();
-        alert(errData.error || 'Lỗi gửi bình luận');
+        const errData = await res.json().catch(() => ({}));
+        setSubmitError(errData.error || 'Lỗi gửi bình luận. Vui lòng thử lại.');
       }
     } catch {
-      alert('Không thể kết nối đến máy chủ');
+      setSubmitError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.');
     } finally {
       setSubmitting(false);
     }
@@ -185,9 +188,17 @@ export function InlineCommentDrawer({
         <div className="p-4 border-t border-border bg-surface">
           {currentUser ? (
             <form onSubmit={handleSubmit} className="space-y-2.5">
+              {submitError && (
+                <div className="p-2 border border-error/30 bg-error/10 text-error text-[11px] font-sans">
+                  {submitError}
+                </div>
+              )}
               <textarea
                 value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
+                onChange={(e) => {
+                  setNewContent(e.target.value);
+                  if (submitError) setSubmitError(null);
+                }}
                 placeholder="Viết cảm nghĩ về đoạn văn này..."
                 rows={2}
                 className="w-full p-2.5 border border-border bg-surface-elevated text-xs text-text-primary focus:outline-none focus:border-primary resize-none"
