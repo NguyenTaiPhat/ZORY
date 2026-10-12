@@ -39,74 +39,37 @@ async function main() {
   }
   console.log(`✓ Đã tạo ${genresData.length} thể loại.`);
 
-  // 2. Tài khoản demo
-  const adminPassword = await bcrypt.hash('admin123', 10);
-  const authorPassword = await bcrypt.hash('author123', 10);
-  const readerPassword = await bcrypt.hash('reader123', 10);
+  // 2. Tài khoản Quản trị viên chính thức
+  const adminPassword = await bcrypt.hash('zoryadmin123!@#', 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@zory.vn' },
-    update: {},
-    create: {
-      email: 'admin@zory.vn',
-      username: 'admin_zory',
-      name: 'Quản Trị Viên ZORY',
+    where: { email: 'zoryadmin@gmail.com' },
+    update: {
       passwordHash: adminPassword,
       role: 'ADMIN',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      bio: 'Người bảo trợ hệ sinh thái ZORY Platform.',
+      name: 'ZORY Admin',
+      username: 'zoryadmin',
+      aiTokensQuota: 999999999,
+      ttsCharsQuota: 999999999,
+    },
+    create: {
+      email: 'zoryadmin@gmail.com',
+      username: 'zoryadmin',
+      name: 'ZORY Admin',
+      passwordHash: adminPassword,
+      role: 'ADMIN',
+      aiTokensQuota: 999999999,
+      ttsCharsQuota: 999999999,
       preferences: {
         create: {
           theme: 'dark',
           readerTheme: 'dark',
           readerFontSize: 19,
-        }
-      }
-    }
+        },
+      },
+    },
   });
-
-  const author = await prisma.user.upsert({
-    where: { email: 'author@zory.vn' },
-    update: {},
-    create: {
-      email: 'author@zory.vn',
-      username: 'than_but_tieu_dao',
-      name: 'Tiêu Dao Mặc Khách',
-      passwordHash: authorPassword,
-      role: 'AUTHOR',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-      bio: 'Tác giả chuyên sáng tác thể loại Huyền Huyễn và Khoa Huyễn kết hợp công nghệ AI Studio.',
-      preferences: {
-        create: {
-          theme: 'system',
-          readerTheme: 'sepia',
-          readerFontSize: 18,
-        }
-      }
-    }
-  });
-
-  const reader = await prisma.user.upsert({
-    where: { email: 'reader@zory.vn' },
-    update: {},
-    create: {
-      email: 'reader@zory.vn',
-      username: 'minh_thu_doc_sach',
-      name: 'Minh Thư',
-      passwordHash: readerPassword,
-      role: 'USER',
-      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-      bio: 'Độc giả yêu thích những câu chuyện sâu sắc và thế giới thần thoại.',
-      preferences: {
-        create: {
-          theme: 'light',
-          readerTheme: 'light',
-          readerFontSize: 18,
-        }
-      }
-    }
-  });
-  console.log('✓ Đã tạo các tài khoản demo (Admin, Author, Reader).');
+  console.log('✓ Đã khởi tạo tài khoản Admin: zoryadmin@gmail.com');
 
   // 3. Tạo các tác phẩm mẫu chất lượng cao
   const booksData = [
@@ -117,8 +80,8 @@ async function main() {
       coverUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600',
       status: 'ONGOING',
       publishStatus: 'PUBLISHED',
-      authorId: author.id,
-      authorName: author.name,
+      authorId: admin.id,
+      authorName: admin.name,
       viewCount: 14200,
       readCount: 9800,
       ratingAvg: 4.9,
@@ -211,8 +174,8 @@ Diệp Phong tra kiếm vào vỏ, ánh mắt bình thản như nước hồ mù
       coverUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600',
       status: 'COMPLETED',
       publishStatus: 'PUBLISHED',
-      authorId: author.id,
-      authorName: author.name,
+      authorId: admin.id,
+      authorName: admin.name,
       viewCount: 8900,
       readCount: 6500,
       ratingAvg: 4.8,
@@ -265,8 +228,8 @@ Mùi hoa lài. Vũ khẽ ghi chú vào cuốn sổ tay da đen. Chi tiết này 
       coverUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600',
       status: 'ONGOING',
       publishStatus: 'PUBLISHED',
-      authorId: author.id,
-      authorName: author.name,
+      authorId: admin.id,
+      authorName: admin.name,
       viewCount: 11200,
       readCount: 7900,
       ratingAvg: 4.95,
@@ -299,8 +262,8 @@ Phong hít một hơi thật sâu. Dự án này là niềm hy vọng duy nhất
       coverUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600',
       status: 'ONGOING',
       publishStatus: 'PUBLISHED',
-      authorId: author.id,
-      authorName: author.name,
+      authorId: admin.id,
+      authorName: admin.name,
       viewCount: 6500,
       readCount: 4200,
       ratingAvg: 4.7,
@@ -378,61 +341,17 @@ Bên trong hiên nhà, một người đàn ông trẻ tuổi mặc áo len xám
       });
     }
 
-    // Thêm đánh giá mẫu
-    await prisma.rating.upsert({
-      where: {
-        bookId_userId: {
-          bookId: createdBook.id,
-          userId: reader.id,
-        }
-      },
-      update: {},
-      create: {
-        bookId: createdBook.id,
-        userId: reader.id,
-        score: 5,
-        review: 'Tác phẩm văn phong tuyệt vời, miêu tả sâu sắc và lôi cuốn từng trang!',
-      }
-    });
-
-    // Thêm bình luận mẫu
-    const firstChapter = await prisma.chapter.findFirst({
-      where: { bookId: createdBook.id, chapterNumber: 1 }
-    });
-
-    if (firstChapter) {
-      await prisma.comment.create({
-        data: {
-          bookId: createdBook.id,
-          chapterId: firstChapter.id,
-          userId: reader.id,
-          content: 'Mở đầu cuốn hút quá, rất mong chờ các chương tiếp theo!',
-        }
-      });
-    }
-
-    // Thêm vào tủ sách của reader
-    await prisma.libraryItem.upsert({
-      where: {
-        userId_bookId: {
-          userId: reader.id,
-          bookId: createdBook.id,
-        }
-      },
-      update: {},
-      create: {
-        userId: reader.id,
-        bookId: createdBook.id,
-        category: 'READING',
-      }
-    });
   }
-  console.log(`✓ Đã tạo ${booksData.length} truyện mẫu và các chương, bình luận, đánh giá.`);
+  console.log(`✓ Đã tạo ${booksData.length} truyện mẫu và các chương.`);
 
-  // 4. Dự án mẫu trong AI Studio cho tác giả
+  // 4. Dự án mẫu trong AI Studio cho Admin
+  await prisma.aiProject.deleteMany({
+    where: { userId: admin.id, title: 'Huyền Thiên Giới Bí Sử' }
+  });
+
   const aiProject = await prisma.aiProject.create({
     data: {
-      userId: author.id,
+      userId: admin.id,
       title: 'Huyền Thiên Giới Bí Sử',
       premise: 'Một thợ rèn bình thường tình cờ rèn ra thanh kiếm có linh hồn của Thần Thú cổ đại, bắt đầu hành trình tìm kiếm chín mảnh vỡ nguyên sơ để cứu lấy đại lục khỏi sự thôn tính của Ma Vực.',
       genre: 'Huyền huyễn',
