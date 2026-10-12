@@ -12,6 +12,8 @@ import {
   Square,
   Volume2,
   Globe,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import {
   segmentBilingualText,
@@ -68,7 +70,9 @@ export function ZoryReader({
   // TTS Bilingual Voice State
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeLang, setActiveLang] = useState<'vi-VN' | 'en-US'>('vi-VN');
-  const [ttsSpeed] = useState(1.0);
+  const [ttsSpeed, setTtsSpeed] = useState<number>(1.0);
+  const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
+  const ttsSpeedRef = useRef<number>(1.0);
   const segmentsRef = useRef<SpeechSegment[]>([]);
   const segmentIdxRef = useRef<number>(0);
   const isSpeakingRef = useRef<boolean>(false);
@@ -202,6 +206,15 @@ export function ZoryReader({
 
     const savedFont = localStorage.getItem('zory_reader_font') as any;
     if (savedFont) setFontFamily(savedFont);
+
+    const savedSpeed = localStorage.getItem('zory_tts_speed');
+    if (savedSpeed) {
+      const parsed = parseFloat(savedSpeed);
+      if (!isNaN(parsed) && parsed > 0) {
+        setTtsSpeed(parsed);
+        ttsSpeedRef.current = parsed;
+      }
+    }
   }, []);
 
   const saveProgress = useCallback(
@@ -306,7 +319,7 @@ export function ZoryReader({
         currentBlobUrlRef.current = blobUrl;
 
         const audio = new Audio(blobUrl);
-        audio.playbackRate = ttsSpeed;
+        audio.playbackRate = ttsSpeedRef.current;
         readerAudioRef.current = audio;
 
         audio.onended = () => {
@@ -353,7 +366,7 @@ export function ZoryReader({
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(seg.text);
       utterance.lang = seg.lang;
-      utterance.rate = ttsSpeed;
+      utterance.rate = ttsSpeedRef.current;
 
       if (voice) {
         utterance.voice = voice;
@@ -377,6 +390,21 @@ export function ZoryReader({
       };
 
       window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const changeTtsSpeed = (newSpeed: number) => {
+    setTtsSpeed(newSpeed);
+    ttsSpeedRef.current = newSpeed;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('zory_tts_speed', String(newSpeed));
+    }
+
+    if (readerAudioRef.current) {
+      readerAudioRef.current.playbackRate = newSpeed;
+    } else if (isSpeakingRef.current && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      speakSegment();
     }
   };
 
@@ -484,30 +512,81 @@ export function ZoryReader({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Audio Toggle */}
-            <button
-              onClick={toggleTTS}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border transition ${
-                isSpeaking
-                  ? 'bg-primary text-white border-primary'
-                  : 'border-border/80 hover:bg-black/5 dark:hover:bg-white/5'
-              }`}
-              title={isSpeaking ? 'Dừng đọc' : 'Đọc giọng nói (ZORY Voice)'}
-            >
-              {isSpeaking ? (
+            {/* Audio Toggle & Speed Selector */}
+            <div className="relative flex items-center">
+              <button
+                onClick={toggleTTS}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border transition ${
+                  isSpeaking
+                    ? 'bg-primary text-white border-primary'
+                    : 'border-border/80 hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+                title={isSpeaking ? 'Dừng đọc' : 'Đọc giọng nói (ZORY Voice)'}
+              >
+                {isSpeaking ? (
+                  <>
+                    <Square className="w-3 h-3 fill-current" />
+                    <span className="hidden sm:inline">
+                      DỪNG [{activeLang === 'vi-VN' ? 'VI' : 'EN'}]
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 text-primary" />
+                    <span className="hidden sm:inline">NGHE (VI/EN)</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setSpeedMenuOpen(!speedMenuOpen)}
+                className={`flex items-center gap-0.5 px-2 py-1.5 text-xs font-mono border border-l-0 transition ${
+                  isSpeaking
+                    ? 'bg-primary/90 text-white border-primary hover:bg-primary'
+                    : 'border-border/80 text-text-primary hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+                title="Tùy chỉnh tốc độ đọc"
+              >
+                <span>{ttsSpeed}x</span>
+                <ChevronDown className="w-3 h-3 opacity-70" />
+              </button>
+
+              {/* Dropdown chỉnh tốc độ đọc */}
+              {speedMenuOpen && (
                 <>
-                  <Square className="w-3 h-3 fill-current" />
-                  <span className="hidden sm:inline">
-                    DỪNG [{activeLang === 'vi-VN' ? 'VI' : 'EN'}]
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Volume2 className="w-3.5 h-3.5 text-primary" />
-                  <span className="hidden sm:inline">NGHE (VI/EN)</span>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setSpeedMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1.5 z-50 w-36 py-1 bg-surface border border-border shadow-xl">
+                    <div className="px-3 py-1 text-[10px] font-mono text-text-secondary border-b border-border/80 mb-0.5">
+                      TỐC ĐỘ ĐỌC (TTS)
+                    </div>
+                    {[0.75, 1.0, 1.25, 1.5, 1.75, 2.0].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          changeTtsSpeed(s);
+                          setSpeedMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 text-xs font-mono transition text-left ${
+                          ttsSpeed === s
+                            ? 'bg-primary/10 text-primary font-bold'
+                            : 'text-text-primary hover:bg-surface-elevated'
+                        }`}
+                      >
+                        <span>{s}x</span>
+                        {s === 1.0 && <span className="text-[10px] opacity-60">Chuẩn</span>}
+                        {s === 1.25 && <span className="text-[10px] opacity-60">Nhanh</span>}
+                        {s === 1.5 && <span className="text-[10px] opacity-60">1.5x</span>}
+                        {s === 2.0 && <span className="text-[10px] opacity-60">2.0x</span>}
+                        {ttsSpeed === s && <Check className="w-3.5 h-3.5 text-primary ml-auto" />}
+                      </button>
+                    ))}
+                  </div>
                 </>
               )}
-            </button>
+            </div>
 
             {/* Index Drawer Button */}
             <button
@@ -680,6 +759,29 @@ export function ZoryReader({
               </button>
             </div>
           </div>
+
+          {/* Audio TTS Playback Speed */}
+          <div className="space-y-1.5 pt-2 border-t border-border">
+            <div className="flex justify-between text-[11px] font-mono text-text-secondary">
+              <span>TỐC ĐỘ GIỌNG ĐỌC:</span>
+              <span className="text-primary font-bold">{ttsSpeed}X</span>
+            </div>
+            <div className="grid grid-cols-6 gap-1 text-xs font-mono">
+              {[0.75, 1.0, 1.25, 1.5, 1.75, 2.0].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => changeTtsSpeed(s)}
+                  className={`py-1 border text-center transition ${
+                    ttsSpeed === s
+                      ? 'border-primary bg-primary/10 text-primary font-bold'
+                      : 'border-border text-text-secondary hover:text-text-primary bg-surface-elevated'
+                  }`}
+                >
+                  {s}x
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -829,6 +931,46 @@ export function ZoryReader({
           )}
         </div>
       </main>
+
+      {/* Floating Audio Bar when Speaking */}
+      {isSpeaking && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 max-w-lg w-[calc(100%-2rem)] bg-surface/95 backdrop-blur-md border border-primary/40 shadow-2xl px-3.5 py-2 flex items-center justify-between gap-2.5 text-text-primary">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse flex-shrink-0" />
+            <div className="text-[11px] font-mono flex items-center gap-1.5 truncate">
+              <span className="font-semibold text-primary uppercase">Đang đọc</span>
+              <span className="text-text-secondary">[{activeLang === 'vi-VN' ? 'VI' : 'EN'}]</span>
+            </div>
+          </div>
+
+          {/* Quick Speed Pills */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {[0.75, 1.0, 1.25, 1.5, 2.0].map((s) => (
+              <button
+                key={s}
+                onClick={() => changeTtsSpeed(s)}
+                className={`px-1.5 py-0.5 text-[11px] font-mono border transition ${
+                  ttsSpeed === s
+                    ? 'border-primary bg-primary text-white font-bold'
+                    : 'border-border/70 hover:border-primary text-text-secondary hover:text-text-primary bg-surface-elevated'
+                }`}
+                title={`Đặt tốc độ ${s}x`}
+              >
+                {s}x
+              </button>
+            ))}
+          </div>
+
+          {/* Stop Button */}
+          <button
+            onClick={toggleTTS}
+            className="p-1 border border-red-500/40 text-red-500 hover:bg-red-500 hover:text-white transition flex-shrink-0"
+            title="Dừng đọc"
+          >
+            <Square className="w-3 h-3 fill-current" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

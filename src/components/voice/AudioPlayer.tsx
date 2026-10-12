@@ -380,7 +380,10 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
     const newSpeed = speeds[nextIdx];
     setSpeed(newSpeed);
 
-    if (isPlayingRef.current) {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = newSpeed;
+    }
+    if (isPlayingRef.current && !audioRef.current) {
       window.speechSynthesis.cancel();
       setTimeout(speakCurrentSegment, 50);
     }
