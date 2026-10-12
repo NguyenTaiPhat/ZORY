@@ -23,6 +23,7 @@ export function runSecuritySuite() {
     'tests/security/05_advanced_defense.test.ts',
     'tests/security/06_deep_rbac_audit.test.ts',
     'tests/security/07_residual_vulnerabilities.test.ts',
+    'tests/security/08_request_random_token_nonce.test.ts',
   ];
 
   const results: SuiteResult[] = [];

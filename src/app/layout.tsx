@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Lora } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { RequestSecurityProvider } from '@/components/security/RequestSecurityProvider';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 
@@ -90,6 +91,7 @@ export default function RootLayout({
       </head>
       <body className={`min-h-screen flex flex-col bg-background text-text-primary antialiased selection:bg-secondary selection:text-primary ${inter.className}`}>
         <ThemeProvider>
+          <RequestSecurityProvider />
           <Navbar />
           <main className="flex-1 w-full">{children}</main>
           <Footer />

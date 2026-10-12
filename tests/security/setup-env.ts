@@ -13,7 +13,38 @@ if (existsSync('.env')) {
         process.env[k.trim()] = v.join('=').replace(/^["']|["']$/g, '').trim();
       }
     }
-  } catch (_) {}
+} catch (_) {}
+}
+
+import { createSecurityHeaders } from '../../src/lib/requestSecurity';
+
+// Patch globalThis.fetch cho test runner nếu chưa patch
+if (!(globalThis as any).__testFetchPatched) {
+  (globalThis as any).__testFetchPatched = true;
+  const originalTestFetch = globalThis.fetch;
+  globalThis.fetch = async (input: any, init?: any) => {
+    let url = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : input?.url || '');
+    if (url.includes('/api/')) {
+      const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : {}));
+      
+      // Chỉ tự động gắn nếu bài test không yêu cầu bỏ qua (x-skip-auto-token)
+      if (!headers.has('x-request-token') && !headers.has('x-skip-auto-token')) {
+        const secHeaders = await createSecurityHeaders();
+        for (const [k, v] of Object.entries(secHeaders)) {
+          if (!headers.has(k)) {
+            headers.set(k, v);
+          }
+        }
+      }
+
+      const newInit = { ...init, headers };
+      if (input instanceof Request) {
+        return originalTestFetch(new Request(input, newInit));
+      }
+      return originalTestFetch(input, newInit);
+    }
+    return originalTestFetch(input, init);
+  };
 }
 
 export interface TestContext {
