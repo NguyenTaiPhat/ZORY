@@ -57,7 +57,29 @@ body {
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+main,
+main > *,
+main > * > *,
+section,
+article,
+form,
+img,
+svg,
+video,
+canvas {
+  min-width: 0;
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Custom Refined Scrollbar */
@@ -181,7 +203,64 @@ body {
 }
 
 .animate-page-enter {
-  animation: zoryPageEnter 0.18s ease-out;
+  animation: zoryPageEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-page[data-motion-ready='true'] .motion-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--motion-delay, 0ms);
+}
+
+.motion-page[data-motion-ready='true'] .motion-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.motion-page .group,
+.motion-page .card-hover,
+.motion-page .card-lift {
+  transform: translateZ(0);
+  transition-property: transform, box-shadow, border-color, background-color, color;
+  transition-duration: 220ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-page .group:hover,
+.motion-page .card-hover:hover,
+.motion-page .card-lift:hover {
+  transform: translateY(-3px);
+}
+
+.motion-page button:not(:disabled),
+.motion-page a {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-page button:not(:disabled):active,
+.motion-page a:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.motion-page .book-cover-frame img {
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1), filter 500ms ease;
+}
+
+.motion-page .group:hover .book-cover-frame img,
+.motion-page .book-cover-frame:hover img {
+  transform: scale(1.035);
+}
+
+@keyframes zoryModalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.motion-modal-in {
+  animation: zoryModalIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Skeleton Shimmer Sweep */
@@ -252,6 +331,24 @@ body {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .motion-page[data-motion-ready='true'] .motion-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .motion-page .group:hover,
+  .motion-page .card-hover:hover,
+  .motion-page .card-lift:hover,
+  .motion-page .group:hover .book-cover-frame img,
+  .motion-page .book-cover-frame:hover img {
+    transform: none !important;
+  }
+
+  .motion-modal-in {
+    animation: none !important;
   }
 
   .animate-shimmer {

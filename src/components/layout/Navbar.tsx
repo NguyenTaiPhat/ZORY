@@ -77,10 +77,10 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-surface/95 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-6 min-w-0">
         {/* Brand Imprint */}
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-3 group interactive-press">
+        <div className="flex items-center gap-4 lg:gap-8 min-w-0 flex-1">
+          <Link href="/" className="flex items-center gap-3 group interactive-press shrink-0">
             <span className="font-display font-black text-2xl tracking-[0.18em] text-text-primary group-hover:text-primary transition duration-150">
               ZORY
             </span>
@@ -115,7 +115,7 @@ export function Navbar() {
         </div>
 
         {/* Search, Utilities & Account */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Minimal Search Bar */}
           <form
             onSubmit={handleSearchSubmit}

@@ -106,13 +106,13 @@ export default async function ExplorePage({ searchParams }: ExploreProps) {
       </div>
 
       {/* Bộ Lọc (Genres, Status, Sắp xếp) */}
-      <div className="bg-surface rounded-md border border-border p-5 space-y-4 shadow-sm">
+      <div className="bg-surface rounded-md border border-border p-4 sm:p-5 space-y-4 shadow-sm min-w-0 overflow-hidden">
         {/* Thể loại */}
         <div className="space-y-2">
           <span className="label-caps text-text-muted">
             Thể loại:
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 min-w-0">
             <Link
               href={`/explore?genre=&status=${currentStatus}&sort=${currentSort}&search=${currentSearch}`}
               className={`px-2.5 py-1 rounded-sm text-xs font-semibold transition ${
@@ -142,11 +142,11 @@ export default async function ExplorePage({ searchParams }: ExploreProps) {
         {/* Trạng thái & Sắp xếp */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-border">
           {/* Trạng thái */}
-          <div className="flex items-center gap-2">
-            <span className="label-caps text-text-muted">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <span className="label-caps text-text-muted shrink-0">
               Tình trạng:
             </span>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap min-w-0">
               {[
                 { label: 'Tất cả', val: 'all' },
                 { label: 'Đang ra', val: 'ONGOING' },
@@ -168,11 +168,11 @@ export default async function ExplorePage({ searchParams }: ExploreProps) {
           </div>
 
           {/* Sắp xếp */}
-          <div className="flex items-center gap-2 sm:justify-end">
-            <span className="label-caps text-text-muted">
+          <div className="flex items-center gap-2 flex-wrap sm:justify-end min-w-0">
+            <span className="label-caps text-text-muted shrink-0">
               Xếp theo:
             </span>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap min-w-0">
               {[
                 { label: 'Lượt đọc', val: 'popular' },
                 { label: 'Mới nhất', val: 'latest' },

@@ -34,15 +34,15 @@ export default async function GenresPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 min-w-0">
         {genres.map((genre) => (
           <Link
             key={genre.slug}
             href={`/genres/${genre.slug}`}
-            className="group p-5 rounded-2xl bg-surface border border-border hover:border-primary card-hover transition space-y-2.5"
+            className="group p-5 min-w-0 rounded-xl bg-surface border border-border hover:border-primary card-hover transition space-y-2.5"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-text-primary group-hover:text-primary transition">
+              <h2 className="text-base font-bold text-text-primary group-hover:text-primary transition min-w-0 truncate">
                 {genre.name}
               </h2>
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-secondary text-primary">

@@ -55,10 +55,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-6 bg-surface p-8 sm:p-10 border border-border">
+      <div className="w-full max-w-md min-w-0 space-y-6 bg-surface p-6 sm:p-10 border border-border overflow-hidden">
         <div className="text-center space-y-1">
           <span className="label-caps">GIA NHẬP ZORY</span>
-          <h1 className="font-sans text-2xl font-bold tracking-tight text-text-primary mt-1">
+          <h1 className="font-sans text-2xl font-bold tracking-tight text-text-primary mt-1 break-words">
             Đăng Ký Hồ Sơ Độc Giả
           </h1>
           <p className="text-xs text-text-secondary">
