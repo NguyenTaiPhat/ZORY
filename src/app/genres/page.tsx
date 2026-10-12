@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import prisma from '@/lib/db';
 import { Layers, ArrowRight } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Thể Loại Truyện',
   description: 'Danh mục các thể loại văn học, tiểu thuyết và truyện hư cấu trên ZORY.',

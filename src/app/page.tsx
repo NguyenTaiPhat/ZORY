@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { formatNumber, formatDateVi } from '@/lib/utils';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const user = await getCurrentUser();

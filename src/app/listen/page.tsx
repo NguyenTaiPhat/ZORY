@@ -4,6 +4,8 @@ import prisma from '@/lib/db';
 import { Headphones, Play, Star, BookOpen, Volume2 } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Sách Nói Audio AI',
   description: 'Thưởng thức kho sách nói và truyện audio với công nghệ lồng tiếng AI biểu cảm.',

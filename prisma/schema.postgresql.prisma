@@ -1,4 +1,3 @@
-// Cấu hình PostgreSQL cho Production / Docker
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -16,10 +15,11 @@ model User {
   passwordHash    String
   avatarUrl       String?
   bio             String?
-  role            String           @default("USER")
+  role            String           @default("USER") // USER, AUTHOR, ADMIN
   isBanned        Boolean          @default(false)
   aiTokensQuota   Int              @default(50000)
   aiTokensUsed    Int              @default(0)
+  aiQuotaResetAt  DateTime?
   ttsCharsQuota   Int              @default(30000)
   ttsCharsUsed    Int              @default(0)
   createdAt       DateTime         @default(now())
@@ -38,17 +38,18 @@ model User {
   aiUsages        AiUsage[]
   ttsJobs         TtsJob[]
   auditLogs       AuditLog[]       @relation("AdminLogs")
+  paragraphReactions ParagraphReaction[]
 }
 
 model UserPreference {
   id               String   @id @default(cuid())
   userId           String   @unique
-  theme            String   @default("system")
-  readerTheme      String   @default("light")
+  theme            String   @default("system") // system, light, dark
+  readerTheme      String   @default("light")  // light, sepia, dark
   readerFontSize   Int      @default(18)
   readerLineHeight Float    @default(1.8)
-  readerFontFamily String   @default("serif")
-  readerWidth      String   @default("medium")
+  readerFontFamily String   @default("serif")  // serif, sans
+  readerWidth      String   @default("medium") // narrow, medium, wide
   autoNextChapter  Boolean  @default(true)
   updatedAt        DateTime @updatedAt
 
@@ -67,10 +68,10 @@ model Book {
   id              String            @id @default(cuid())
   title           String
   slug            String            @unique
-  summary         String            @db.Text
+  summary         String
   coverUrl        String?
-  status          String            @default("ONGOING")
-  publishStatus   String            @default("PUBLISHED")
+  status          String            @default("ONGOING")   // ONGOING, COMPLETED, HIATUS
+  publishStatus   String            @default("PUBLISHED") // DRAFT, PENDING, PUBLISHED, UNLISTED, REMOVED
   authorId        String
   authorName      String?
   viewCount       Int               @default(0)
@@ -89,6 +90,7 @@ model Book {
   readingProgress ReadingProgress[]
   libraryItems    LibraryItem[]
   bookmarks       Bookmark[]
+  loreEntries     LoreEntry[]
 
   @@index([slug])
   @@index([authorId])
@@ -110,9 +112,9 @@ model Chapter {
   bookId        String
   chapterNumber Int
   title         String
-  content       String            @db.Text
+  content       String
   wordCount     Int               @default(0)
-  publishStatus String            @default("PUBLISHED")
+  publishStatus String            @default("PUBLISHED") // DRAFT, PUBLISHED
   viewCount     Int               @default(0)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -122,9 +124,29 @@ model Chapter {
   progress      ReadingProgress[]
   bookmarks     Bookmark[]
   ttsJobs       TtsJob[]
+  reactions     ParagraphReaction[]
+  originChoices ChapterChoice[]   @relation("ChapterOriginChoices")
+  targetChoices ChapterChoice[]   @relation("ChapterTargetChoices")
 
   @@unique([bookId, chapterNumber])
   @@index([bookId])
+}
+
+model ChapterChoice {
+  id              String   @id @default(cuid())
+  chapterId       String
+  targetChapterId String?
+  choiceText      String
+  summary         String?
+  order           Int      @default(0)
+  voteCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  chapter         Chapter  @relation("ChapterOriginChoices", fields: [chapterId], references: [id], onDelete: Cascade)
+  targetChapter   Chapter? @relation("ChapterTargetChoices", fields: [targetChapterId], references: [id], onDelete: SetNull)
+
+  @@index([chapterId])
+  @@index([targetChapterId])
 }
 
 model Comment {
@@ -132,23 +154,40 @@ model Comment {
   bookId    String
   chapterId String?
   userId    String
-  content   String   @db.Text
-  isSpoiler Boolean  @default(false)
-  createdAt DateTime @default(now())
+  content        String
+  paragraphIndex Int?     // Vị trí đoạn văn trong chương (0, 1, 2...) nếu là inline comment
+  isSpoiler      Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([bookId])
+  @@index([chapterId, paragraphIndex])
+}
+
+model ParagraphReaction {
+  id             String   @id @default(cuid())
+  chapterId      String
+  paragraphIndex Int
+  userId         String?
+  guestId        String?
+  reaction       String   // FIRE, HEART, LAUGH, SHOCK, SAD
+  createdAt      DateTime @default(now())
+
+  chapter        Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([chapterId, paragraphIndex])
 }
 
 model Rating {
   id        String   @id @default(cuid())
   bookId    String
   userId    String
-  score     Int      @default(5)
-  review    String?  @db.Text
+  score     Int      @default(5) // 1 to 5
+  review    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -180,7 +219,7 @@ model LibraryItem {
   id        String   @id @default(cuid())
   userId    String
   bookId    String
-  category  String   @default("READING")
+  category  String   @default("READING") // READING, FAVORITE, PLAN_TO_READ, FINISHED
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -218,25 +257,32 @@ model Notification {
 model Report {
   id          String   @id @default(cuid())
   reporterId  String
-  targetType  String
+  targetType  String   // BOOK, CHAPTER, COMMENT, USER
   targetId    String
-  reason      String   @db.Text
-  status      String   @default("PENDING")
+  reason      String
+  status      String   @default("PENDING") // PENDING, RESOLVED, DISMISSED
   createdAt   DateTime @default(now())
 
   reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
 }
 
+// --------------------------------------------------------------------------
+// AI STUDIO
+// --------------------------------------------------------------------------
+
 model AiProject {
   id               String          @id @default(cuid())
   userId           String
   title            String
-  premise          String          @db.Text
+  premise          String
   genre            String
   writingStyle     String          @default("Văn học hiện đại, giàu cảm xúc, miêu tả chi tiết")
   targetAudience   String          @default("Mọi lứa tuổi")
   estimatedLength  String          @default("Tiểu thuyết dài")
-  worldBible       String?         @db.Text
+  worldBible       String?         // JSON string or Markdown containing settings, power system, factions
+  coverUrl         String?
+  publishedBookId  String?
+  publishedBookSlug String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -245,6 +291,7 @@ model AiProject {
   outlines         StoryOutline[]
   studioChapters   StudioChapter[]
   aiUsages         AiUsage[]
+  loreEntries      LoreEntry[]
 
   @@index([userId])
 }
@@ -253,15 +300,15 @@ model Character {
   id            String    @id @default(cuid())
   projectId     String
   name          String
-  role          String    @default("Nhân vật chính")
-  appearance    String?   @db.Text
-  personality   String?   @db.Text
-  goals         String?   @db.Text
-  backstory     String?   @db.Text
-  abilities     String?   @db.Text
-  relationships String?   @db.Text
-  secrets       String?   @db.Text
-  currentStatus String?   @db.Text
+  role          String    @default("Nhân vật chính") // Protagonist, Antagonist, Supporting
+  appearance    String?
+  personality   String?
+  goals         String?
+  backstory     String?
+  abilities     String?
+  relationships String?
+  secrets       String?
+  currentStatus String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -273,10 +320,10 @@ model Character {
 model StoryOutline {
   id              String    @id @default(cuid())
   projectId       String
-  logline         String?   @db.Text
-  synopsis        String?   @db.Text
-  actsJson        String?   @db.Text
-  chapterListJson String?   @db.Text
+  logline         String?
+  synopsis        String?
+  actsJson        String?   // JSON structured story arcs
+  chapterListJson String?   // JSON structured chapter aims
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -290,10 +337,10 @@ model StudioChapter {
   projectId     String
   chapterNumber Int
   title         String
-  content       String    @db.Text @default("")
-  summary       String?   @db.Text
+  content       String    @default("")
+  summary       String?
   wordCount     Int       @default(0)
-  status        String    @default("DRAFT")
+  status        String    @default("DRAFT") // DRAFT, REVISED, FINAL
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -302,11 +349,33 @@ model StudioChapter {
   @@unique([projectId, chapterNumber])
 }
 
+model LoreEntry {
+  id          String     @id @default(cuid())
+  projectId   String?
+  bookId      String?
+  category    String     // CHARACTER, FACTION, REALM, LOCATION, ARTIFACT
+  name        String
+  aliases     String?
+  role        String?    // Nhân vật chính, Phản diện, Tông chủ, Tiền bối...
+  realm       String?    // Cảnh giới / Tu vi
+  faction     String?    // Môn phái / Thế lực
+  summary     String
+  detailsJson String?    // Quan hệ, bối cảnh, ghi chú mở rộng (JSON)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  project     AiProject? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  book        Book?      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, category])
+  @@index([bookId, category])
+}
+
 model AiUsage {
   id               String    @id @default(cuid())
   userId           String
   projectId        String?
-  operation        String
+  operation        String    // GENERATE, CONTINUE, REWRITE, SUMMARIZE
   model            String
   promptTokens     Int       @default(0)
   completionTokens Int       @default(0)
@@ -317,14 +386,18 @@ model AiUsage {
   project          AiProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 }
 
+// --------------------------------------------------------------------------
+// TTS VOICE
+// --------------------------------------------------------------------------
+
 model TtsJob {
   id           String    @id @default(cuid())
   userId       String?
   chapterId    String
-  provider     String    @default("web-speech")
+  provider     String    @default("web-speech") // web-speech, google, edge, azure, mock
   voice        String    @default("vi-VN-HoaiMyNeural")
   speed        Float     @default(1.0)
-  status       String    @default("COMPLETED")
+  status       String    @default("COMPLETED") // QUEUED, PROCESSING, COMPLETED, FAILED
   audioUrl     String?
   duration     Float     @default(0)
   charCount    Int       @default(0)
@@ -349,13 +422,17 @@ model TtsCache {
   createdAt   DateTime @default(now())
 }
 
+// --------------------------------------------------------------------------
+// ADMINISTRATION
+// --------------------------------------------------------------------------
+
 model AuditLog {
   id         String   @id @default(cuid())
   adminId    String
   action     String
   targetType String
   targetId   String?
-  details    String?  @db.Text
+  details    String?
   ipAddress  String?
   createdAt  DateTime @default(now())
 
@@ -365,7 +442,49 @@ model AuditLog {
 model SiteSetting {
   id          String   @id @default(cuid())
   key         String   @unique
-  value       String   @db.Text
+  value       String
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+// --------------------------------------------------------------------------
+// API KEY LOAD BALANCER & ALBUMS
+// --------------------------------------------------------------------------
+
+model ApiKeyAlbum {
+  id          String       @id @default(cuid())
+  name        String       // ví dụ: "Album Tháng 10/2026"
+  monthKey    String       // ví dụ: "2026-10" để phân loại theo tháng
+  description String?
+  isActive    Boolean      @default(true) // Album active thì keys trong album tham gia xoay vòng
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  keys        ApiKeyPool[]
+
+  @@index([monthKey])
+}
+
+model ApiKeyPool {
+  id            String       @id @default(cuid())
+  albumId       String
+  name          String       // Nhãn (ví dụ: "Gemini Key 01")
+  provider      String       @default("gemini") // gemini, openai, groq
+  key           String       // Khóa API thực tế
+  isActive      Boolean      @default(true) // Bật/tắt thủ công
+  status        String       @default("UNTESTED") // UNTESTED, ACTIVE, RATE_LIMITED, INVALID
+  requestCount  Int          @default(0)
+  successCount  Int          @default(0)
+  errorCount    Int          @default(0)
+  lastUsedAt    DateTime?
+  lastTestedAt  DateTime?
+  lastLatencyMs Int?
+  lastError     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  album         ApiKeyAlbum  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@index([albumId])
+  @@index([provider, isActive, status])
 }
