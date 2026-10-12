@@ -169,3 +169,96 @@ body {
   pointer-events: none;
   mix-blend-mode: overlay;
 }
+
+/* Page Transitions & Hardware Accelerated Motion */
+@keyframes zoryPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: zoryPageEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+/* Skeleton Shimmer Sweep */
+@keyframes zoryShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-elevated) 0%,
+    var(--border-color) 45%,
+    var(--surface-elevated) 90%
+  );
+  background-size: 200% 100%;
+  animation: zoryShimmer 1.8s ease-in-out infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 45%,
+    rgba(255, 255, 255, 0.03) 90%
+  );
+  background-size: 200% 100%;
+}
+
+/* Top Progress Bar Glowing Amethyst Accent */
+.nav-progress-glow {
+  box-shadow: 0 0 10px rgba(149, 110, 213, 0.75), 0 0 4px rgba(149, 110, 213, 0.5);
+}
+
+/* Micro-interaction Utilities */
+.interactive-press {
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.interactive-press:active {
+  transform: scale(0.982);
+}
+
+.card-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-page-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .animate-shimmer {
+    animation: none !important;
+  }
+}
+

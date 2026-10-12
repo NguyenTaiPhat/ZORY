@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Lora } from 'next/font/google';
 import './globals.css';
+import { Suspense } from 'react';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { RequestSecurityProvider } from '@/components/security/RequestSecurityProvider';
+import { NavigationProgress } from '@/components/navigation/NavigationProgress';
+import { PageTransition } from '@/components/navigation/PageTransition';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 
@@ -91,9 +94,14 @@ export default function RootLayout({
       </head>
       <body className={`min-h-screen flex flex-col bg-background text-text-primary antialiased selection:bg-secondary selection:text-primary ${inter.className}`}>
         <ThemeProvider>
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
           <RequestSecurityProvider />
           <Navbar />
-          <main className="flex-1 w-full">{children}</main>
+          <main className="flex-1 w-full flex flex-col">
+            <PageTransition>{children}</PageTransition>
+          </main>
           <Footer />
         </ThemeProvider>
       </body>

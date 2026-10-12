@@ -18,7 +18,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="p-1.5 rounded-md border border-border bg-surface-elevated hover:border-text-primary text-text-secondary hover:text-text-primary transition"
+      className="p-1.5 rounded-md border border-border bg-surface-elevated hover:border-text-primary text-text-secondary hover:text-text-primary transition interactive-press"
       title={`Đang dùng giao diện ${resolvedTheme === 'dark' ? 'Tối' : 'Sáng'}. Nhấn để đổi.`}
       aria-label="Chuyển chế độ sáng tối"
     >

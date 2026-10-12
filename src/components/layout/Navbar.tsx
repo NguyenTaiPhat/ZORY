@@ -80,7 +80,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
         {/* Brand Imprint */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group interactive-press">
             <span className="font-display font-black text-2xl tracking-[0.18em] text-text-primary group-hover:text-primary transition duration-150">
               ZORY
             </span>
@@ -139,7 +139,7 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 p-1 rounded-md border border-border bg-surface-elevated hover:border-text-primary transition"
+                className="flex items-center gap-2 p-1 rounded-md border border-border bg-surface-elevated hover:border-text-primary transition interactive-press"
                 title="Tài khoản cá nhân"
               >
                 {user.avatarUrl ? (
@@ -226,13 +226,13 @@ export function Navbar() {
             <div className="hidden sm:flex items-center gap-2 whitespace-nowrap">
               <Link
                 href="/login"
-                className="px-3 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary transition"
+                className="px-3 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary transition interactive-press"
               >
                 Đăng nhập
               </Link>
               <Link
                 href="/register"
-                className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-text-primary text-background hover:opacity-90 transition shadow-sm"
+                className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-text-primary text-background hover:opacity-90 transition shadow-sm interactive-press"
               >
                 Gia nhập
               </Link>
@@ -242,7 +242,7 @@ export function Navbar() {
           {/* Mobile hamburger menu toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-1.5 rounded-md border border-border text-text-secondary hover:text-text-primary"
+            className="lg:hidden p-1.5 rounded-md border border-border text-text-secondary hover:text-text-primary interactive-press"
             aria-label="Menu"
           >
             {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
