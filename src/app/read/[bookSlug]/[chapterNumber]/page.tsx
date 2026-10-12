@@ -67,9 +67,25 @@ export default async function ReadChapterPage({
         chapterNumber: num,
       },
     },
+    include: {
+      book: {
+        select: {
+          authorId: true,
+        },
+      },
+    },
   });
 
   if (!chapter) notFound();
+
+  // Bảo vệ chương ẩn / bản thảo: Độc giả không thể xem chương DRAFT
+  if (chapter.publishStatus === 'DRAFT') {
+    const isAuthor = user && user.id === chapter.book.authorId;
+    const isAdmin = user && user.role === 'ADMIN';
+    if (!isAuthor && !isAdmin) {
+      notFound();
+    }
+  }
 
   // Tăng lượt xem hợp lệ
   await prisma.chapter.update({

@@ -86,6 +86,87 @@ export async function PATCH(
       });
     }
 
+    // Cập nhật và lưu các chương bản thảo (nếu gửi updatedChapters)
+    if (body.updatedChapters && Array.isArray(body.updatedChapters)) {
+      if (body.updatedChapters.length > 0) {
+        await prisma.studioChapter.deleteMany({
+          where: {
+            projectId: id,
+            chapterNumber: { gt: body.updatedChapters.length },
+          },
+        });
+      }
+
+      for (const ch of body.updatedChapters) {
+        const words = ch.content ? ch.content.trim().split(/\s+/).length : 0;
+        const status = ch.status || 'DRAFT';
+
+        await prisma.studioChapter.upsert({
+          where: {
+            projectId_chapterNumber: {
+              projectId: id,
+              chapterNumber: ch.chapterNumber,
+            },
+          },
+          update: {
+            title: ch.title,
+            content: ch.content || '',
+            summary: ch.summary || null,
+            wordCount: words,
+            status,
+          },
+          create: {
+            projectId: id,
+            chapterNumber: ch.chapterNumber,
+            title: ch.title,
+            content: ch.content || '',
+            summary: ch.summary || null,
+            wordCount: words,
+            status,
+          },
+        });
+      }
+
+      // Nếu tác phẩm ĐÃ XUẤT BẢN -> tự động đồng bộ sang tác phẩm công khai
+      if (project.publishedBookId) {
+        await prisma.chapter.deleteMany({
+          where: {
+            bookId: project.publishedBookId,
+            chapterNumber: { gt: body.updatedChapters.length },
+          },
+        });
+
+        for (const ch of body.updatedChapters) {
+          const words = ch.content ? ch.content.trim().split(/\s+/).length : 0;
+          const isDraft = ch.status === 'DRAFT' || ch.status === 'HIDDEN';
+          const pubStatus = isDraft ? 'DRAFT' : 'PUBLISHED';
+
+          await prisma.chapter.upsert({
+            where: {
+              bookId_chapterNumber: {
+                bookId: project.publishedBookId,
+                chapterNumber: ch.chapterNumber,
+              },
+            },
+            update: {
+              title: ch.title,
+              content: ch.content || 'Nội dung đang được cập nhật...',
+              wordCount: words,
+              publishStatus: pubStatus,
+            },
+            create: {
+              bookId: project.publishedBookId,
+              chapterNumber: ch.chapterNumber,
+              title: ch.title,
+              content: ch.content || 'Nội dung đang được cập nhật...',
+              wordCount: words,
+              publishStatus: pubStatus,
+            },
+          });
+        }
+      }
+    }
+
     return NextResponse.json({ success: true, project: updated });
   } catch (error: any) {
     console.error('Lỗi cập nhật dự án:', error);

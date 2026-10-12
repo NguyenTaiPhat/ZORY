@@ -31,6 +31,8 @@ import {
   Edit3,
   ChevronDown,
   ChevronUp,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { cleanAiLiteratureOutput } from '@/lib/ai/cleaner';
 import { formatThousands } from '@/lib/utils';
@@ -63,21 +65,23 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
     setIsPublishing(true);
     setPublishError(null);
     try {
-      if (chapters[activeChapterIndex]) {
-        chapters[activeChapterIndex] = {
+      const currentChs = [...chapters];
+      if (currentChs[activeChapterIndex]) {
+        currentChs[activeChapterIndex] = {
           ...currentChapter,
           title: chapterTitle,
           content: chapterContent,
           wordCount,
+          status: currentChapter.status || 'DRAFT',
         };
-        await fetch(`/api/studio/projects/${project.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            updatedChapters: chapters,
-          }),
-        });
       }
+      await fetch(`/api/studio/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updatedChapters: currentChs,
+        }),
+      });
 
       const res = await fetch(`/api/studio/projects/${project.id}/publish`, {
         method: 'POST',
@@ -277,16 +281,20 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   const wordCount = chapterContent.trim() ? chapterContent.trim().split(/\s+/).length : 0;
 
   const handleSelectChapter = (index: number) => {
-    chapters[activeChapterIndex] = {
+    const updatedList = [...chapters];
+    updatedList[activeChapterIndex] = {
       ...currentChapter,
       title: chapterTitle,
       content: chapterContent,
+      wordCount,
+      status: currentChapter.status || 'DRAFT',
     };
+    setChapters(updatedList);
     setActiveChapterIndex(index);
-    const target = chapters[index];
+    const target = updatedList[index];
     if (target) {
-      setChapterTitle(target.title);
-      setChapterContent(target.content);
+      setChapterTitle(target.title || `Chương ${target.chapterNumber}`);
+      setChapterContent(target.content || '');
     }
   };
 
@@ -305,26 +313,104 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
     setChapterContent('');
   };
 
+  const handleToggleChapterPublishStatus = async () => {
+    const currentStatus = currentChapter.status || 'DRAFT';
+    const nextStatus =
+      currentStatus === 'DRAFT' || currentStatus === 'HIDDEN' ? 'PUBLISHED' : 'DRAFT';
+
+    const updatedList = [...chapters];
+    updatedList[activeChapterIndex] = {
+      ...currentChapter,
+      title: chapterTitle,
+      content: chapterContent,
+      wordCount,
+      status: nextStatus,
+    };
+    setChapters(updatedList);
+
+    try {
+      setIsSaving(true);
+      await fetch(`/api/studio/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updatedChapters: updatedList,
+        }),
+      });
+      setSaveMessage(
+        nextStatus === 'PUBLISHED'
+          ? 'Đã công khai chương'
+          : 'Đã ẩn chương (chưa xong)'
+      );
+      setTimeout(() => setSaveMessage(''), 2500);
+    } catch {
+      setSaveMessage('Lỗi cập nhật');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteChapter = async (indexToDelete: number) => {
+    if (chapters.length <= 1) {
+      alert('Bản thảo cần có ít nhất 1 chương.');
+      return;
+    }
+    const target = chapters[indexToDelete];
+    const confirmDelete = window.confirm(
+      `Bạn có chắc muốn xóa Chương ${target?.chapterNumber}: "${target?.title}"?`
+    );
+    if (!confirmDelete) return;
+
+    const remaining = chapters
+      .filter((_, idx) => idx !== indexToDelete)
+      .map((ch, idx) => ({
+        ...ch,
+        chapterNumber: idx + 1,
+      }));
+
+    setChapters(remaining);
+    const nextIndex = Math.max(0, Math.min(indexToDelete, remaining.length - 1));
+    setActiveChapterIndex(nextIndex);
+    const nextActive = remaining[nextIndex];
+    if (nextActive) {
+      setChapterTitle(nextActive.title);
+      setChapterContent(nextActive.content || '');
+    }
+
+    try {
+      await fetch(`/api/studio/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updatedChapters: remaining,
+        }),
+      });
+    } catch {}
+  };
+
   const handleSaveChapter = async () => {
     setIsSaving(true);
     setSaveMessage('');
     try {
-      chapters[activeChapterIndex] = {
+      const updatedList = [...chapters];
+      updatedList[activeChapterIndex] = {
         ...currentChapter,
         title: chapterTitle,
         content: chapterContent,
         wordCount,
+        status: currentChapter.status || 'DRAFT',
       };
+      setChapters(updatedList);
 
       await fetch(`/api/studio/projects/${project.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          updatedChapters: chapters,
+          updatedChapters: updatedList,
         }),
       });
 
-      setSaveMessage('Đã lưu bản nháp');
+      setSaveMessage(project.publishedBookSlug ? 'Đã lưu & đồng bộ' : 'Đã lưu bản nháp');
       setTimeout(() => setSaveMessage(''), 2500);
     } catch (err) {
       setSaveMessage('Lỗi lưu bản nháp');
@@ -683,18 +769,29 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="truncate">
+                      <span className="truncate flex-1 mr-1.5">
                         [{ch.chapterNumber.toString().padStart(2, '0')}] {ch.title}
                       </span>
-                      {ch.content ? (
-                        <span className="text-[10px] font-sans font-normal text-text-tertiary">
-                          {ch.content.trim().split(/\s+/).length} từ
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-sans font-normal text-text-tertiary italic">
-                          Dự thảo
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {ch.status === 'PUBLISHED' ? (
+                          <span className="text-[9.5px] font-sans font-semibold px-1 py-0.2 rounded-xs border border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
+                            Công khai
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-sans font-semibold px-1 py-0.2 rounded-xs border border-amber-500/40 bg-amber-500/10 text-amber-400">
+                            Ẩn
+                          </span>
+                        )}
+                        {ch.content ? (
+                          <span className="text-[10px] font-sans font-normal text-text-tertiary">
+                            {ch.content.trim().split(/\s+/).length} từ
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-sans font-normal text-text-tertiary italic">
+                            Dự thảo
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {ch.summary && (
                       <span className="text-[10.5px] font-sans font-normal text-text-secondary line-clamp-1 italic text-left">
@@ -835,6 +932,74 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
               </div>
             )}
 
+            {/* Thanh trạng thái chương & Đánh dấu Ẩn / Công khai */}
+            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-surface-elevated/70 border border-border text-xs font-sans">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-[11px] text-text-secondary uppercase">
+                  TRẠNG THÁI CHƯƠNG {currentChapter.chapterNumber}:
+                </span>
+                {currentChapter.status === 'DRAFT' ||
+                currentChapter.status === 'HIDDEN' ||
+                !currentChapter.status ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs border border-amber-500/40 bg-amber-500/10 text-amber-500 font-semibold text-[11px]">
+                    <EyeOff className="w-3 h-3" />
+                    <span>ĐANG ẨN (CHƯA VIẾT XONG / BẢN THẢO)</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs border border-emerald-500/40 bg-emerald-500/10 text-emerald-500 font-semibold text-[11px]">
+                    <Eye className="w-3 h-3" />
+                    <span>CÔNG KHAI (ĐÃ ĐĂNG LÊN TRUYỆN)</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleToggleChapterPublishStatus}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 border text-xs font-semibold transition ${
+                    currentChapter.status === 'DRAFT' ||
+                    currentChapter.status === 'HIDDEN' ||
+                    !currentChapter.status
+                      ? 'border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'
+                      : 'border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400'
+                  }`}
+                  title={
+                    currentChapter.status === 'DRAFT' ||
+                    currentChapter.status === 'HIDDEN' ||
+                    !currentChapter.status
+                      ? 'Bấm để công khai chương này cho độc giả cùng đọc'
+                      : 'Bấm để ẩn chương này nếu chưa viết xong'
+                  }
+                >
+                  {currentChapter.status === 'DRAFT' ||
+                  currentChapter.status === 'HIDDEN' ||
+                  !currentChapter.status ? (
+                    <>
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>ĐÁNH DẤU CÔNG KHAI</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-3.5 h-3.5" />
+                      <span>ẨN CHƯƠNG (CHƯA XONG)</span>
+                    </>
+                  )}
+                </button>
+
+                {chapters.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteChapter(activeChapterIndex)}
+                    className="p-1 border border-border hover:border-rose-500/40 hover:bg-rose-500/10 text-text-secondary hover:text-rose-500 transition"
+                    title="Xóa chương này"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Tiêu đề chương */}
             <div className="min-w-0 max-w-full">
               <input
@@ -943,12 +1108,23 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="truncate">
+                  <span className="truncate flex-1 mr-1.5">
                     [{ch.chapterNumber.toString().padStart(2, '0')}] {ch.title}
                   </span>
-                  <span className="text-[10px] font-sans font-normal text-text-tertiary">
-                    {ch.content ? `${ch.content.trim().split(/\s+/).length} từ` : 'Dự thảo'}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {ch.status === 'PUBLISHED' ? (
+                      <span className="text-[9.5px] font-sans font-semibold px-1 py-0.2 rounded-xs border border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
+                        Công khai
+                      </span>
+                    ) : (
+                      <span className="text-[9.5px] font-sans font-semibold px-1 py-0.2 rounded-xs border border-amber-500/40 bg-amber-500/10 text-amber-400">
+                        Ẩn
+                      </span>
+                    )}
+                    <span className="text-[10px] font-sans font-normal text-text-tertiary">
+                      {ch.content ? `${ch.content.trim().split(/\s+/).length} từ` : 'Dự thảo'}
+                    </span>
+                  </div>
                 </div>
                 {ch.summary && (
                   <span className="text-[10.5px] font-sans font-normal text-text-secondary line-clamp-1 italic text-left">
@@ -1552,13 +1728,13 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Quy mô hiện tại:</span>
                     <span className="text-text-primary font-medium">
-                      {chapters.length} chương hoàn chỉnh
+                      {chapters.length} chương ({chapters.filter((c) => c.status === 'PUBLISHED').length} công khai, {chapters.filter((c) => c.status === 'DRAFT' || c.status === 'HIDDEN' || !c.status).length} ẩn)
                     </span>
                   </div>
                 </div>
 
                 <p className="text-xs font-sans text-text-secondary leading-relaxed">
-                  Khi xuất bản, tác phẩm sẽ xuất hiện công khai trên <strong>Khám Phá (/explore)</strong>, <strong>Thể Loại (/genres)</strong>. Tất cả độc giả trên hệ thống đều có thể tìm kiếm, đọc từng chương và tra cứu lorebook nhân vật.
+                  Khi cập nhật, các chương được đánh dấu <strong>CÔNG KHAI</strong> sẽ lập tức hiển thị trên <strong>Khám Phá</strong> và <strong>Trang Đọc Truyện</strong>. Các chương đánh dấu <strong>ẨN</strong> sẽ được giữ riêng tư cho bạn tiếp tục hoàn thiện.
                 </p>
 
                 {publishError && (

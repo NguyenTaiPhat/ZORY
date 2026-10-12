@@ -151,8 +151,20 @@ export async function POST(
       });
 
       // Đồng bộ các chương
+      await prisma.chapter.deleteMany({
+        where: {
+          bookId: targetBook.id,
+          chapterNumber: { gt: project.studioChapters.length },
+        },
+      });
+
+      let publishedCount = 0;
       for (const sc of project.studioChapters) {
         const words = sc.content ? sc.content.trim().split(/\s+/).length : 0;
+        const isDraft = sc.status === 'DRAFT' || sc.status === 'HIDDEN';
+        const pubStatus = isDraft ? 'DRAFT' : 'PUBLISHED';
+        if (pubStatus === 'PUBLISHED') publishedCount++;
+
         await prisma.chapter.upsert({
           where: {
             bookId_chapterNumber: {
@@ -164,7 +176,7 @@ export async function POST(
             title: sc.title,
             content: sc.content || 'Nội dung đang được cập nhật...',
             wordCount: words,
-            publishStatus: 'PUBLISHED',
+            publishStatus: pubStatus,
           },
           create: {
             bookId: targetBook.id,
@@ -172,7 +184,7 @@ export async function POST(
             title: sc.title,
             content: sc.content || 'Nội dung đang được cập nhật...',
             wordCount: words,
-            publishStatus: 'PUBLISHED',
+            publishStatus: pubStatus,
           },
         });
       }
@@ -184,6 +196,33 @@ export async function POST(
       while (await prisma.book.findUnique({ where: { slug } })) {
         slug = `${baseSlug}-${counter}`;
         counter++;
+      }
+
+      let publishedCount = 0;
+      const chaptersToCreate = project.studioChapters.map((sc, index) => {
+        const isDraft = sc.status === 'DRAFT' || sc.status === 'HIDDEN';
+        let pubStatus = isDraft ? 'DRAFT' : 'PUBLISHED';
+        if (index === 0 && isDraft && sc.content) {
+          pubStatus = 'PUBLISHED';
+        }
+        if (pubStatus === 'PUBLISHED') publishedCount++;
+
+        return {
+          chapterNumber: sc.chapterNumber,
+          title: sc.title,
+          content: sc.content || 'Nội dung đang được cập nhật...',
+          wordCount: sc.content ? sc.content.trim().split(/\s+/).length : 0,
+          publishStatus: pubStatus,
+        };
+      });
+
+      if (publishedCount === 0 && chaptersToCreate.length > 0) {
+        chaptersToCreate[0].publishStatus = 'PUBLISHED';
+        publishedCount = 1;
+        await prisma.studioChapter.updateMany({
+          where: { projectId: project.id, chapterNumber: 1 },
+          data: { status: 'PUBLISHED' },
+        });
       }
 
       targetBook = await prisma.book.create({
@@ -202,13 +241,7 @@ export async function POST(
               }
             : undefined,
           chapters: {
-            create: project.studioChapters.map((sc) => ({
-              chapterNumber: sc.chapterNumber,
-              title: sc.title,
-              content: sc.content || 'Nội dung đang được cập nhật...',
-              wordCount: sc.content ? sc.content.trim().split(/\s+/).length : 0,
-              publishStatus: 'PUBLISHED',
-            })),
+            create: chaptersToCreate,
           },
         },
       });
@@ -232,15 +265,22 @@ export async function POST(
       });
     }
 
+    const totalChapters = project.studioChapters.length;
+    const finalPublishedCount = targetBook ? await prisma.chapter.count({
+      where: { bookId: targetBook.id, publishStatus: 'PUBLISHED' },
+    }) : totalChapters;
+
     return NextResponse.json({
       success: true,
-      message: 'Xuất bản tác phẩm lên Thư viện ZORY thành công!',
+      message: 'Cập nhật tác phẩm lên Thư viện ZORY thành công!',
       bookId: targetBook.id,
       bookSlug: targetBook.slug,
       slug: targetBook.slug,
       bookTitle: targetBook.title,
-      chaptersPublished: project.studioChapters.length,
-      chapterCount: project.studioChapters.length,
+      chaptersPublished: finalPublishedCount,
+      chapterCount: finalPublishedCount,
+      totalChapters,
+      draftCount: totalChapters - finalPublishedCount,
     });
   } catch (error: any) {
     console.error('Lỗi xuất bản tác phẩm:', error);
