@@ -153,6 +153,16 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // AI Co-Writer Direction States (Định hướng tình tiết trước khi sinh văn)
+  const [aiStep, setAiStep] = useState<1 | 2>(1);
+  const [directionLoading, setDirectionLoading] = useState(false);
+  const [directionOptions, setDirectionOptions] = useState<
+    Array<{ id: string; tag: string; title: string; summary: string }>
+  >([]);
+  const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(null);
+  const [customDirection, setCustomDirection] = useState('');
+  const [activeDirectionSummary, setActiveDirectionSummary] = useState('');
+
   const captureSelection = () => {
     const textarea = textareaRef.current;
     if (!textarea) return { text: '', range: null };
@@ -309,6 +319,35 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
     }
   };
 
+  const fetchDirections = async () => {
+    setDirectionLoading(true);
+    setDirectionOptions([]);
+    setSelectedDirectionId(null);
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'SUGGEST_DIRECTIONS',
+          prompt: chapterContent ? chapterContent.slice(-800) : (currentChapter.summary || project.premise || ''),
+          projectId: project.id,
+          systemPrompt: `Ngữ cảnh thế giới: ${worldBibleText}. Phong cách: ${project.writingStyle}`,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.directions && Array.isArray(data.directions)) {
+        setDirectionOptions(data.directions);
+        if (data.directions.length > 0) {
+          setSelectedDirectionId(data.directions[0].id);
+        }
+      }
+    } catch (err) {
+      console.warn('Lỗi lấy gợi ý hướng đi:', err);
+    } finally {
+      setDirectionLoading(false);
+    }
+  };
+
   const handleOpenAiModal = (
     operation: 'CONTINUE' | 'REWRITE' | 'SUMMARIZE',
     initialInstr: string = ''
@@ -331,7 +370,37 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
       }
     }
 
+    if (operation === 'CONTINUE') {
+      setAiStep(1);
+      setSelectedDirectionId(null);
+      setCustomDirection('');
+      setActiveDirectionSummary('');
+      fetchDirections();
+    } else {
+      setAiStep(2);
+      setActiveDirectionSummary('');
+    }
+
     setAiModalOpen(true);
+  };
+
+  const handleProceedToProse = () => {
+    let summary = '';
+    if (customDirection.trim()) {
+      summary = customDirection.trim();
+    } else if (selectedDirectionId) {
+      const opt = directionOptions.find((d) => d.id === selectedDirectionId);
+      if (opt) {
+        summary = `${opt.title}: ${opt.summary}`;
+      }
+    }
+    setActiveDirectionSummary(summary);
+    setAiStep(2);
+  };
+
+  const handleSkipDirections = () => {
+    setActiveDirectionSummary('');
+    setAiStep(2);
   };
 
   const handleTriggerAi = async () => {
@@ -347,6 +416,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
           prompt: chapterContent || (currentChapter.summary ? `Cốt truyện chương: ${currentChapter.summary}` : ''),
           selectedText: aiOperation === 'REWRITE' ? textToRewrite : (selectedText || (chapterContent ? chapterContent.slice(-800) : '')),
           instruction: aiInstruction,
+          directionSummary: activeDirectionSummary,
           length: aiLength,
           projectId: project.id,
           systemPrompt: `Ngữ cảnh thế giới: ${worldBibleText}. Phong cách: ${project.writingStyle}`,
@@ -931,7 +1001,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                 <Sparkles className="w-4 h-4 text-primary" />
                 <h3 className="label-caps text-text-primary text-xs sm:text-sm">
                   {aiOperation === 'CONTINUE'
-                    ? 'AI VIẾT TIẾP ĐOẠN VĂN'
+                    ? 'AI ĐỒNG TÁC GIẢ: VIẾT TIẾP BẢN THẢO'
                     : aiOperation === 'REWRITE'
                     ? 'AI TRAU CHUỐT VĂN PHONG'
                     : 'AI TÓM TẮT BẢN THẢO'}
@@ -945,115 +1015,335 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
               </button>
             </div>
 
-            {aiOperation === 'REWRITE' ? (
-              <div className="p-3.5 border border-primary/30 bg-primary/5 space-y-2">
-                <div className="font-semibold text-xs text-primary flex items-center gap-1.5 font-sans">
-                  <Wand2 className="w-3.5 h-3.5" />
-                  <span>Chế độ: Trau chuốt & Gọt dũa câu từ tự nhiên</span>
-                </div>
-                <p className="text-[11px] font-sans text-text-secondary leading-relaxed">
-                  {selectionRange ? (
-                    <>
-                      Đang trau chuốt <strong>đoạn văn bản đã chọn ({selectedText.trim().split(/\s+/).filter(Boolean).length} từ)</strong>. AI giữ nguyên 100% cốt truyện, nhân vật và sự kiện; chỉ sửa câu văn lủng củng, sượng gạo cho tự nhiên, mượt mà và giàu cảm xúc hơn.
-                    </>
-                  ) : (
-                    <>
-                      Đang trau chuốt <strong>toàn bộ chương ({wordCount} từ)</strong>. AI giữ nguyên tình tiết gốc, gọt dũa từ ngữ trôi chảy, tự nhiên và xóa bỏ cảm giác dịch máy.
-                    </>
-                  )}
-                </p>
-                {selectedText && selectionRange && (
-                  <div className="pt-2 border-t border-border/50">
-                    <span className="block text-[10px] font-mono text-text-tertiary mb-1">
-                      ĐOẠN TRÍCH ĐÃ BÔI ĐEN:
-                    </span>
-                    <div className="p-2.5 bg-surface border border-border text-xs font-serif italic text-text-secondary max-h-24 overflow-y-auto reader-content">
-                      "{selectedText}"
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                <label className="block text-xs font-mono text-text-secondary">
-                  DUNG LƯỢNG SINH VĂN MONG MUỐN:
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAiLength('epic')}
-                    className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
-                      aiLength === 'epic'
-                        ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
-                        : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
+            {/* Stepper Tabs (Chỉ hiển thị cho luồng VIẾT TIẾP) */}
+            {aiOperation === 'CONTINUE' && (
+              <div className="grid grid-cols-2 gap-2 p-1 bg-surface-elevated border border-border text-xs font-sans">
+                <button
+                  type="button"
+                  onClick={() => setAiStep(1)}
+                  className={`flex items-center justify-center gap-2 py-2 px-3 transition font-medium ${
+                    aiStep === 1
+                      ? 'bg-surface text-primary font-bold shadow-xs border border-border'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono ${
+                      aiStep === 1
+                        ? 'bg-primary text-white font-bold'
+                        : activeDirectionSummary
+                        ? 'bg-emerald-500/20 text-emerald-400 font-bold'
+                        : 'bg-border text-text-secondary'
                     }`}
                   >
-                    <div className="font-semibold text-xs flex items-center justify-center gap-1">
-                      <span>Đại chương</span>
-                      <span className="text-[9px] bg-primary text-white px-1 rounded-xs">VIP</span>
-                    </div>
-                    <div className="text-[10px] text-text-tertiary">~2500 - 3500 từ</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiLength('detailed')}
-                    className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
-                      aiLength === 'detailed'
-                        ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
-                        : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
+                    {activeDirectionSummary && aiStep === 2 ? '✓' : '1'}
+                  </span>
+                  <span>01. ĐỊNH HƯỚNG TÌNH TIẾT</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (directionOptions.length > 0 || customDirection.trim() || activeDirectionSummary) {
+                      handleProceedToProse();
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-2 py-2 px-3 transition font-medium ${
+                    aiStep === 2
+                      ? 'bg-surface text-primary font-bold shadow-xs border border-border'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono ${
+                      aiStep === 2 ? 'bg-primary text-white font-bold' : 'bg-border text-text-secondary'
                     }`}
                   >
-                    <div className="font-semibold text-xs">Cảnh dài</div>
-                    <div className="text-[10px] text-text-tertiary">~1800 - 2200 từ</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiLength('standard')}
-                    className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
-                      aiLength === 'standard'
-                        ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
-                        : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    <div className="font-semibold text-xs">Tiêu chuẩn</div>
-                    <div className="text-[10px] text-text-tertiary">~1000 - 1400 từ</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiLength('short')}
-                    className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
-                      aiLength === 'short'
-                        ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
-                        : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    <div className="font-semibold text-xs">Ngắn gọn</div>
-                    <div className="text-[10px] text-text-tertiary">~500 - 700 từ</div>
-                  </button>
-                </div>
+                    2
+                  </span>
+                  <span>02. SINH CHÍNH VĂN</span>
+                </button>
               </div>
             )}
 
-            <div className="space-y-2">
-              <label className="block text-xs font-mono text-text-secondary">
-                CHỈ DẪN BIÊN TẬP BỔ SUNG (TÙY CHỌN):
-              </label>
-              <input
-                type="text"
-                value={aiInstruction}
-                onChange={(e) => setAiInstruction(e.target.value)}
-                placeholder="Ví dụ: Giữ giọng văn cổ điển, tăng cảm xúc bi tráng..."
-                className="w-full p-2.5 text-xs font-mono border border-border bg-surface-elevated text-text-primary focus:outline-none focus:border-primary"
-              />
-            </div>
+            {/* BƯỚC 1: ĐỊNH HƯỚNG TÌNH TIẾT (CHỈ DÀNH CHO CONTINUE Ở BƯỚC 1) */}
+            {aiOperation === 'CONTINUE' && aiStep === 1 ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <p className="text-[11px] font-sans text-text-secondary leading-relaxed">
+                    AI đã đọc phân đoạn gần nhất để gợi ý 3 hướng diễn biến tiếp theo. Chọn 1 hướng hoặc tự phác thảo ý tưởng riêng:
+                  </p>
+                  <button
+                    type="button"
+                    onClick={fetchDirections}
+                    disabled={directionLoading}
+                    title="Phân tích lại và tạo gợi ý mới"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-sans border border-border bg-surface-elevated hover:bg-surface text-text-secondary hover:text-text-primary transition shrink-0 disabled:opacity-50"
+                  >
+                    <RotateCw className={`w-3.5 h-3.5 ${directionLoading ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">Tạo lại gợi ý</span>
+                  </button>
+                </div>
 
-            <button
-              onClick={handleTriggerAi}
-              disabled={aiLoading}
-              className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-mono font-semibold border border-border transition disabled:opacity-40"
-            >
-              {aiLoading ? 'AI ĐANG SINH VĂN...' : 'TẠO BẢN ĐỀ XUẤT'}
-            </button>
+                {directionLoading ? (
+                  <div className="space-y-3 py-2">
+                    <div className="flex items-center justify-center gap-2 text-xs text-text-secondary py-3">
+                      <Sparkles className="w-4 h-4 text-primary animate-spin" />
+                      <span>AI đang phân tích mạch truyện và tạo 3 hướng đi kịch tính...</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="p-3.5 border border-border bg-surface-elevated/50 space-y-2.5 animate-pulse"
+                        >
+                          <div className="w-16 h-4 bg-border/60 rounded" />
+                          <div className="w-3/4 h-4 bg-border/60 rounded" />
+                          <div className="space-y-1.5 pt-1">
+                            <div className="w-full h-3 bg-border/40 rounded" />
+                            <div className="w-5/6 h-3 bg-border/40 rounded" />
+                            <div className="w-4/6 h-3 bg-border/40 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {directionOptions.map((opt) => {
+                      const isSelected = selectedDirectionId === opt.id && !customDirection.trim();
+                      const tagColor =
+                        opt.tag === 'CAO TRÀO'
+                          ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                          : opt.tag === 'BÍ ẨN'
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                          : opt.tag === 'TÂM LÝ'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                          : 'bg-primary/10 text-primary border-primary/30';
+
+                      return (
+                        <div
+                          key={opt.id}
+                          onClick={() => {
+                            setSelectedDirectionId(opt.id);
+                            setCustomDirection('');
+                          }}
+                          className={`cursor-pointer p-3.5 border transition space-y-2 flex flex-col justify-between text-left relative ${
+                            isSelected
+                              ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-xs'
+                              : 'border-border bg-surface-elevated hover:border-text-tertiary hover:bg-surface'
+                          }`}
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`label-caps text-[9px] px-1.5 py-0.5 border rounded-xs font-mono ${tagColor}`}
+                              >
+                                {opt.tag}
+                              </span>
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center text-[9px] ${
+                                  isSelected
+                                    ? 'border-primary bg-primary text-white font-bold'
+                                    : 'border-border text-transparent'
+                                }`}
+                              >
+                                ✓
+                              </div>
+                            </div>
+                            <h4 className="font-sans font-bold text-xs text-text-primary leading-snug">
+                              {opt.title}
+                            </h4>
+                            <p className="text-[11px] font-sans text-text-secondary leading-relaxed line-clamp-4">
+                              {opt.summary}
+                            </p>
+                          </div>
+                          <div className="pt-2 border-t border-border/40 text-[10px] font-mono text-text-tertiary">
+                            Hướng {opt.id}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Ô tự phác thảo ý tưởng */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="block text-xs font-mono text-text-secondary">
+                    HOẶC PHÁC THẢO Ý TƯỞNG CỦA RIÊNG BẠN:
+                  </label>
+                  <input
+                    type="text"
+                    value={customDirection}
+                    onChange={(e) => {
+                      setCustomDirection(e.target.value);
+                      if (e.target.value.trim()) {
+                        setSelectedDirectionId(null);
+                      }
+                    }}
+                    placeholder="Ví dụ: Nhân vật giả vờ đầu hàng để tiếp cận tướng địch, sau đó hạ độc..."
+                    className="w-full p-2.5 text-xs font-sans border border-border bg-surface-elevated text-text-primary focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {/* Footer hành động Bước 1 */}
+                <div className="flex items-center justify-between gap-3 pt-3 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={handleSkipDirections}
+                    className="px-3.5 py-2 border border-border text-xs font-sans text-text-secondary hover:text-text-primary transition"
+                  >
+                    BỎ QUA (VIẾT TỰ DO)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={directionLoading || (!selectedDirectionId && !customDirection.trim())}
+                    onClick={handleProceedToProse}
+                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-sans font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-40"
+                  >
+                    <span>TIẾP TỤC VỚI HƯỚNG NÀY</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* BƯỚC 2: SINH CHÍNH VĂN (HOẶC CHẾ ĐỘ REWRITE/SUMMARIZE) */
+              <>
+                {aiOperation === 'REWRITE' ? (
+                  <div className="p-3.5 border border-primary/30 bg-primary/5 space-y-2">
+                    <div className="font-semibold text-xs text-primary flex items-center gap-1.5 font-sans">
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span>Chế độ: Trau chuốt & Gọt dũa câu từ tự nhiên</span>
+                    </div>
+                    <p className="text-[11px] font-sans text-text-secondary leading-relaxed">
+                      {selectionRange ? (
+                        <>
+                          Đang trau chuốt <strong>đoạn văn bản đã chọn ({selectedText.trim().split(/\s+/).filter(Boolean).length} từ)</strong>. AI giữ nguyên 100% cốt truyện, nhân vật và sự kiện; chỉ sửa câu văn lủng củng, sượng gạo cho tự nhiên, mượt mà và giàu cảm xúc hơn.
+                        </>
+                      ) : (
+                        <>
+                          Đang trau chuốt <strong>toàn bộ chương ({wordCount} từ)</strong>. AI giữ nguyên tình tiết gốc, gọt dũa từ ngữ trôi chảy, tự nhiên và xóa bỏ cảm giác dịch máy.
+                        </>
+                      )}
+                    </p>
+                    {selectedText && selectionRange && (
+                      <div className="pt-2 border-t border-border/50">
+                        <span className="block text-[10px] font-mono text-text-tertiary mb-1">
+                          ĐOẠN TRÍCH ĐÃ BÔI ĐEN:
+                        </span>
+                        <div className="p-2.5 bg-surface border border-border text-xs font-serif italic text-text-secondary max-h-24 overflow-y-auto reader-content">
+                          "{selectedText}"
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* Banner hiển thị hướng đi đã chốt (nếu có) */}
+                    {aiOperation === 'CONTINUE' && activeDirectionSummary && (
+                      <div className="p-3 border border-primary/30 bg-primary/10 flex items-start justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <span className="label-caps text-[9px] text-primary block">
+                            HƯỚNG ĐI ĐÃ DUYỆT (AI BÁM SÁT 100%):
+                          </span>
+                          <p className="text-xs font-sans text-text-primary font-medium leading-relaxed">
+                            {activeDirectionSummary}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAiStep(1)}
+                          className="text-[11px] font-sans text-primary hover:underline shrink-0 flex items-center gap-1 mt-0.5"
+                        >
+                          <ArrowLeft className="w-3 h-3" />
+                          <span>Đổi hướng</span>
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-mono text-text-secondary">
+                        DUNG LƯỢNG SINH VĂN MONG MUỐN:
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAiLength('epic')}
+                          className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
+                            aiLength === 'epic'
+                              ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
+                              : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
+                          }`}
+                        >
+                          <div className="font-semibold text-xs flex items-center justify-center gap-1">
+                            <span>Đại chương</span>
+                            <span className="text-[9px] bg-primary text-white px-1 rounded-xs">VIP</span>
+                          </div>
+                          <div className="text-[10px] text-text-tertiary">~2500 - 3500 từ</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiLength('detailed')}
+                          className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
+                            aiLength === 'detailed'
+                              ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
+                              : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
+                          }`}
+                        >
+                          <div className="font-semibold text-xs">Cảnh dài</div>
+                          <div className="text-[10px] text-text-tertiary">~1800 - 2200 từ</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiLength('standard')}
+                          className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
+                            aiLength === 'standard'
+                              ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
+                              : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
+                          }`}
+                        >
+                          <div className="font-semibold text-xs">Tiêu chuẩn</div>
+                          <div className="text-[10px] text-text-tertiary">~1000 - 1400 từ</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiLength('short')}
+                          className={`py-2 px-1.5 sm:px-2.5 text-xs font-sans border transition text-center ${
+                            aiLength === 'short'
+                              ? 'border-primary bg-primary/15 text-primary font-bold ring-1 ring-primary'
+                              : 'border-border bg-surface-elevated text-text-secondary hover:text-text-primary'
+                          }`}
+                        >
+                          <div className="font-semibold text-xs">Ngắn gọn</div>
+                          <div className="text-[10px] text-text-tertiary">~500 - 700 từ</div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-mono text-text-secondary">
+                    CHỈ DẪN BIÊN TẬP BỔ SUNG (TÙY CHỌN):
+                  </label>
+                  <input
+                    type="text"
+                    value={aiInstruction}
+                    onChange={(e) => setAiInstruction(e.target.value)}
+                    placeholder="Ví dụ: Giữ giọng văn cổ điển, tăng cảm xúc bi tráng..."
+                    className="w-full p-2.5 text-xs font-mono border border-border bg-surface-elevated text-text-primary focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <button
+                  onClick={handleTriggerAi}
+                  disabled={aiLoading}
+                  className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-mono font-semibold border border-border transition disabled:opacity-40"
+                >
+                  {aiLoading ? 'AI ĐANG SINH VĂN...' : 'TẠO BẢN ĐỀ XUẤT'}
+                </button>
+              </>
+            )}
 
             {aiResult && (
               <div className="space-y-3 pt-3 border-t border-border">
