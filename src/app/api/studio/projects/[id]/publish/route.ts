@@ -145,6 +145,8 @@ export async function POST(
         where: { id: project.id },
         data: {
           coverUrl: finalCover,
+          publishedBookId: targetBook.id,
+          publishedBookSlug: targetBook.slug,
         },
       });
 
@@ -235,8 +237,10 @@ export async function POST(
       message: 'Xuất bản tác phẩm lên Thư viện ZORY thành công!',
       bookId: targetBook.id,
       bookSlug: targetBook.slug,
+      slug: targetBook.slug,
       bookTitle: targetBook.title,
       chaptersPublished: project.studioChapters.length,
+      chapterCount: project.studioChapters.length,
     });
   } catch (error: any) {
     console.error('Lỗi xuất bản tác phẩm:', error);

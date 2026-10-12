@@ -111,12 +111,18 @@ export function StudioProjectsList({
       if (!res.ok) {
         throw new Error(data.error || 'Lỗi khi xuất bản tác phẩm');
       }
-      setPublishSuccessInfo(data);
+      const slug = data.slug || data.bookSlug;
+      const chapterCount = data.chapterCount ?? data.chaptersPublished ?? (proj._count?.studioChapters || 0);
+      setPublishSuccessInfo({
+        bookId: data.bookId,
+        slug,
+        chapterCount,
+      });
       // Cập nhật trạng thái dự án tại giao diện
       setProjects((prev) =>
         prev.map((p) =>
           p.id === proj.id
-            ? { ...p, publishedBookId: data.bookId, publishedBookSlug: data.slug }
+            ? { ...p, publishedBookId: data.bookId, publishedBookSlug: slug }
             : p
         )
       );
@@ -516,7 +522,7 @@ export function StudioProjectsList({
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <Link
-                    href={`/book/${publishSuccessInfo.slug}`}
+                    href={`/book/${publishSuccessInfo.slug || projectToPublish.publishedBookSlug || ''}`}
                     target="_blank"
                     className="px-3 py-2.5 bg-surface-elevated hover:bg-border border border-border text-text-primary text-xs font-bold font-sans text-center transition flex items-center justify-center gap-1.5"
                   >
@@ -525,7 +531,7 @@ export function StudioProjectsList({
                     <ExternalLink className="w-3 h-3 text-text-tertiary" />
                   </Link>
                   <Link
-                    href={`/read/${publishSuccessInfo.slug}/1`}
+                    href={`/read/${publishSuccessInfo.slug || projectToPublish.publishedBookSlug || ''}/1`}
                     target="_blank"
                     className="px-3 py-2.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold font-sans text-center transition flex items-center justify-center gap-1.5"
                   >

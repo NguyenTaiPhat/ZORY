@@ -86,11 +86,17 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
       if (!res.ok) {
         throw new Error(data.error || 'Lỗi khi xuất bản tác phẩm');
       }
-      setPublishSuccessInfo(data);
+      const slug = data.slug || data.bookSlug;
+      const chapterCount = data.chapterCount ?? data.chaptersPublished ?? chapters.length;
+      setPublishSuccessInfo({
+        bookId: data.bookId,
+        slug,
+        chapterCount,
+      });
       setProject((prev: any) => ({
         ...prev,
         publishedBookId: data.bookId,
-        publishedBookSlug: data.slug,
+        publishedBookSlug: slug,
       }));
     } catch (err: any) {
       setPublishError(err.message || 'Không thể xuất bản tác phẩm');
@@ -1613,7 +1619,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <Link
-                    href={`/book/${publishSuccessInfo.slug}`}
+                    href={`/book/${publishSuccessInfo.slug || project.publishedBookSlug || ''}`}
                     target="_blank"
                     className="px-3 py-2.5 bg-surface-elevated hover:bg-border border border-border text-text-primary text-xs font-bold font-sans text-center transition flex items-center justify-center gap-1.5"
                   >
@@ -1622,7 +1628,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                     <ExternalLink className="w-3 h-3 text-text-tertiary" />
                   </Link>
                   <Link
-                    href={`/read/${publishSuccessInfo.slug}/1`}
+                    href={`/read/${publishSuccessInfo.slug || project.publishedBookSlug || ''}/1`}
                     target="_blank"
                     className="px-3 py-2.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold font-sans text-center transition flex items-center justify-center gap-1.5"
                   >
