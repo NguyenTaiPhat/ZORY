@@ -14,6 +14,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { formatNumber, formatDateVi } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,8 +103,26 @@ export default async function HomePage() {
     });
   }
 
+  const hasPublishedBooks = Boolean(
+    featuredBook || popularBooks.length || latestBooks.length || completedBooks.length
+  );
+
   return (
     <div className="w-full space-y-16 pb-20">
+      {!hasPublishedBooks ? (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-16">
+          <EmptyState
+            icon={<BookOpen className="h-7 w-7" />}
+            title="Thư viện đang chờ chương đầu tiên"
+            description="ZORY hiện chưa có tác phẩm nào được phát hành. Hãy khám phá các thể loại hoặc trở thành người mở đầu thư viện bằng một bản thảo mới."
+            actionHref="/genres"
+            actionLabel="Khám phá thể loại"
+            secondaryHref="/studio/new"
+            secondaryLabel="Tạo bản thảo"
+          />
+        </section>
+      ) : (
+        <>
       {/* 1. HERO SECTION — EDITORIAL MONOLITH SPREAD */}
       {featuredBook && (
         <section className="border-b border-border bg-surface">
@@ -529,6 +548,8 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 }

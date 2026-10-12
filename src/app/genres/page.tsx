@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import prisma from '@/lib/db';
 import { Layers, ArrowRight } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,8 +35,17 @@ export default async function GenresPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 min-w-0">
-        {genres.map((genre) => (
+      {genres.length === 0 ? (
+        <EmptyState
+          icon={<Layers className="h-7 w-7" />}
+          title="Chưa có thể loại nào"
+          description="Các nhóm thể loại sẽ được mở khi thư viện có những tác phẩm đầu tiên."
+          actionHref="/"
+          actionLabel="Về trang chủ"
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 min-w-0">
+          {genres.map((genre) => (
           <Link
             key={genre.slug}
             href={`/genres/${genre.slug}`}
@@ -57,8 +67,9 @@ export default async function GenresPage() {
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

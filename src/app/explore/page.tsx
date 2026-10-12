@@ -4,6 +4,7 @@ import Link from 'next/link';
 import prisma from '@/lib/db';
 import { formatNumber } from '@/lib/utils';
 import { Star, Filter, Search, BookOpen, ArrowRight } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const metadata: Metadata = {
   title: 'Khám Phá Truyện Hay',
@@ -197,21 +198,17 @@ export default async function ExplorePage({ searchParams }: ExploreProps) {
 
       {/* Kết quả & Danh sách sách */}
       {books.length === 0 ? (
-        <div className="text-center py-20 bg-surface rounded-md border border-border space-y-3">
-          <BookOpen className="w-10 h-10 mx-auto text-text-muted opacity-40" />
-          <h3 className="font-display text-lg font-bold text-text-primary">
-            Không tìm thấy bản thảo phù hợp
-          </h3>
-          <p className="text-xs text-text-muted max-w-sm mx-auto">
-            Hãy thử tìm kiếm với từ khóa khác hoặc thiết lập lại bộ lọc.
-          </p>
-          <Link
-            href="/explore"
-            className="inline-block mt-2 px-4 py-2 rounded-sm bg-text-primary text-background text-xs font-bold uppercase tracking-wider"
-          >
-            Đặt lại bộ lọc
-          </Link>
-        </div>
+        <EmptyState
+          icon={<BookOpen className="h-7 w-7" />}
+          title={currentSearch || currentGenre || currentStatus !== 'all' ? 'Không tìm thấy bản thảo phù hợp' : 'Thư viện chưa có tác phẩm'}
+          description={currentSearch || currentGenre || currentStatus !== 'all'
+            ? 'Hãy thử từ khóa khác hoặc đặt lại bộ lọc để xem thêm tác phẩm.'
+            : 'Các tác phẩm đầu tiên sẽ xuất hiện tại đây ngay khi được phát hành.'}
+          actionHref="/explore"
+          actionLabel={currentSearch || currentGenre || currentStatus !== 'all' ? 'Đặt lại bộ lọc' : 'Làm mới thư viện'}
+          secondaryHref="/genres"
+          secondaryLabel="Xem thể loại"
+        />
       ) : (
         <div className="space-y-8">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">

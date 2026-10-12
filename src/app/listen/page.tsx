@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import prisma from '@/lib/db';
 import { Headphones, Play, Star, BookOpen, Sparkles } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -139,8 +140,17 @@ export default async function ListenOverviewPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {booksWithAudio.map((book) => (
+        {booksWithAudio.length === 0 ? (
+          <EmptyState
+            icon={<Headphones className="h-7 w-7" />}
+            title="Chưa có sách nói để phát"
+            description="Khi tác phẩm đầu tiên được phát hành audio, danh mục ZORY Voice sẽ xuất hiện tại đây."
+            actionHref="/explore"
+            actionLabel="Khám phá tác phẩm"
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {booksWithAudio.map((book) => (
             <div
               key={book.id}
               className="p-4 border border-border bg-surface hover:border-primary transition group flex gap-4 shadow-2xs hover:shadow-xs"
@@ -206,8 +216,9 @@ export default async function ListenOverviewPage() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
