@@ -29,20 +29,24 @@ export async function POST(req: Request) {
 
     if (customUrl) {
       const trimmedUrl = customUrl.trim();
-      // Chặn các URL scheme độc hại như javascript:, data:, vbscript:
-      if (!/^https?:\/\//i.test(trimmedUrl) && !/^\/uploads\//i.test(trimmedUrl)) {
+      // Chấp nhận http://, https://, /uploads/, và data:image/
+      if (
+        !/^https?:\/\//i.test(trimmedUrl) &&
+        !/^\/uploads\//i.test(trimmedUrl) &&
+        !/^data:image\//i.test(trimmedUrl)
+      ) {
         return NextResponse.json(
-          { error: 'Liên kết ảnh không hợp lệ. Chỉ chấp nhận giao thức http:// hoặc https://' },
+          { error: 'Liên kết ảnh không hợp lệ. Chỉ chấp nhận giao thức http://, https:// hoặc định dạng ảnh trực tiếp' },
           { status: 400 }
         );
       }
       finalCoverUrl = trimmedUrl;
     } else if (file) {
-      // Giới hạn kích thước tệp tối đa 5MB
-      const MAX_FILE_SIZE = 5 * 1024 * 1024;
+      // Giới hạn kích thước tệp tối đa 15MB
+      const MAX_FILE_SIZE = 15 * 1024 * 1024;
       if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
-          { error: 'Dung lượng ảnh vượt quá giới hạn cho phép (tối đa 5MB)' },
+          { error: 'Dung lượng ảnh vượt quá giới hạn cho phép (tối đa 15MB)' },
           { status: 400 }
         );
       }
@@ -72,14 +76,27 @@ export async function POST(req: Request) {
       }
 
       const ext = isJpeg ? '.jpg' : isPng ? '.png' : '.webp';
+      const mimeType = isJpeg ? 'image/jpeg' : isPng ? 'image/png' : 'image/webp';
+      const base64Url = `data:${mimeType};base64,${buffer.toString('base64')}`;
 
-      const fileName = `cover-${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'covers');
+      // Thử lưu vào filesystem nếu môi trường hỗ trợ (local development)
+      let savedToDisk = false;
+      if (!process.env.VERCEL) {
+        try {
+          const fileName = `cover-${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
+          const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'covers');
+          await fs.mkdir(uploadDir, { recursive: true });
+          await fs.writeFile(path.join(uploadDir, fileName), buffer);
+          finalCoverUrl = `/uploads/covers/${fileName}`;
+          savedToDisk = true;
+        } catch (fsErr) {
+          console.warn('Không thể ghi file vào disk (chuyển sang base64 data URL):', fsErr);
+        }
+      }
 
-      await fs.mkdir(uploadDir, { recursive: true });
-      await fs.writeFile(path.join(uploadDir, fileName), buffer);
-
-      finalCoverUrl = `/uploads/covers/${fileName}`;
+      if (!savedToDisk) {
+        finalCoverUrl = base64Url;
+      }
     } else {
       return NextResponse.json(
         { error: 'Vui lòng chọn tệp ảnh hoặc nhập liên kết ảnh' },
@@ -99,9 +116,23 @@ export async function POST(req: Request) {
           data: { coverUrl: finalCoverUrl },
         });
 
-        if (project.publishedBookId) {
+        let targetBookId = project.publishedBookId;
+        if (!targetBookId) {
+          const existingBook = await prisma.book.findFirst({
+            where: {
+              authorId: user.id,
+              title: project.title,
+            },
+            select: { id: true },
+          });
+          if (existingBook) {
+            targetBookId = existingBook.id;
+          }
+        }
+
+        if (targetBookId) {
           await prisma.book.update({
-            where: { id: project.publishedBookId },
+            where: { id: targetBookId },
             data: { coverUrl: finalCoverUrl },
           });
         }
@@ -115,7 +146,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Lỗi tải ảnh bìa:', error);
     return NextResponse.json(
-      { error: 'Lỗi tải ảnh bìa lên hệ thống' },
+      { error: error?.message || 'Lỗi tải ảnh bìa lên hệ thống' },
       { status: 500 }
     );
   }

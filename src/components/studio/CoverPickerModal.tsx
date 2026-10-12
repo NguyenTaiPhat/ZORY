@@ -41,6 +41,65 @@ export function CoverPickerModal({
 
   if (!isOpen) return null;
 
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined') {
+        resolve(file);
+        return;
+      }
+      // Nếu file nhỏ hơn 250KB thì giữ nguyên
+      if (file.size <= 250 * 1024) {
+        resolve(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+                    type: 'image/jpeg',
+                  });
+                  resolve(compressedFile);
+                } else {
+                  resolve(file);
+                }
+              },
+              'image/jpeg',
+              0.85
+            );
+          } else {
+            resolve(file);
+          }
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -50,16 +109,21 @@ export function CoverPickerModal({
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMsg('Dung lượng ảnh tối đa là 10MB');
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMsg('Dung lượng ảnh tối đa là 15MB');
       return;
     }
+
+    // Hiển thị preview ngay lập tức
+    const previewUrl = URL.createObjectURL(file);
+    setSelectedUrl(previewUrl);
 
     setIsUploading(true);
     setErrorMsg('');
     try {
+      const fileToUpload = await compressImage(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       if (projectId) formData.append('projectId', projectId);
 
       const res = await fetch('/api/upload/cover', {
