@@ -103,7 +103,7 @@ export function InlineCommentDrawer({
         <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-elevated/40">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-primary" />
-            <h3 className="font-serif font-bold text-base text-text-primary">
+            <h3 className="font-sans font-bold text-base text-text-primary">
               Bình Luận Đoạn #{paragraphIndex + 1}
             </h3>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-surface border border-border text-text-secondary">
@@ -137,7 +137,7 @@ export function InlineCommentDrawer({
           ) : comments.length === 0 ? (
             <div className="py-12 text-center space-y-2 text-text-secondary">
               <MessageSquare className="w-7 h-7 mx-auto opacity-30" />
-              <p className="text-xs font-serif">
+              <p className="text-xs font-sans text-text-secondary">
                 Chưa có bình luận nào cho đoạn này.
               </p>
               <p className="text-[11px] text-text-muted">

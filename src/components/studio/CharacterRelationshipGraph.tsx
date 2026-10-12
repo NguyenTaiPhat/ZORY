@@ -112,7 +112,7 @@ export function CharacterRelationshipGraph({
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-serif font-bold text-base text-text-primary tracking-tight">
+                    <h3 className="font-sans font-bold text-base text-text-primary tracking-tight">
                       {char.name}
                     </h3>
                     {char.aliases && (
@@ -146,7 +146,7 @@ export function CharacterRelationshipGraph({
                   )}
                 </div>
 
-                <p className="text-xs text-text-secondary leading-relaxed line-clamp-2 pt-1 font-serif">
+                <p className="text-xs text-text-secondary leading-relaxed line-clamp-2 pt-1 font-sans">
                   {char.summary}
                 </p>
               </div>
@@ -180,7 +180,7 @@ export function CharacterRelationshipGraph({
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-              <h4 className="font-serif font-bold text-lg text-text-primary">
+              <h4 className="font-sans font-bold text-lg text-text-primary">
                 Chi Tiết Hồ Sơ: {selectedChar.name}
               </h4>
             </div>
@@ -209,7 +209,7 @@ export function CharacterRelationshipGraph({
 
           <div className="space-y-2 text-xs">
             <span className="text-text-muted font-mono uppercase text-[10px] block">Tiểu sử & Đặc điểm</span>
-            <p className="p-3 bg-surface border border-border font-serif text-sm leading-relaxed text-text-secondary">
+            <p className="p-3 bg-surface border border-border font-sans text-sm leading-relaxed text-text-secondary">
               {selectedChar.summary}
             </p>
           </div>

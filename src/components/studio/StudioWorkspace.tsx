@@ -561,7 +561,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                 <ScrollText className="w-3.5 h-3.5 text-primary" />
                 <span className="label-caps text-[10px]">CỐT TRUYỆN DỰ ÁN</span>
               </div>
-              <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 font-serif">
+              <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 font-sans">
                 {project.outlines?.[0]?.synopsis || project.premise}
               </p>
             </div>
@@ -584,7 +584,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                   <button
                     key={idx}
                     onClick={() => handleSelectChapter(idx)}
-                    className={`w-full text-left p-2.5 text-xs font-mono transition flex flex-col gap-1 border ${
+                    className={`w-full text-left p-2.5 text-xs font-sans transition flex flex-col gap-1 border ${
                       idx === activeChapterIndex
                         ? 'border-primary bg-primary/10 text-primary font-bold'
                         : 'border-transparent text-text-primary hover:bg-surface-elevated'
@@ -737,7 +737,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                     </button>
                   )}
                 </div>
-                <p className="text-text-secondary leading-relaxed font-serif italic text-xs sm:text-sm break-words">
+                <p className="text-text-secondary leading-relaxed font-sans italic text-xs sm:text-sm break-words">
                   {currentChapter.summary}
                 </p>
               </div>
@@ -750,7 +750,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                 value={chapterTitle}
                 onChange={(e) => setChapterTitle(e.target.value)}
                 placeholder="Nhập tiêu đề chương..."
-                className="w-full min-w-0 max-w-full font-serif text-lg sm:text-2xl font-bold bg-transparent border-b border-border focus:border-primary pb-2 text-text-primary focus:outline-none"
+                className="w-full min-w-0 max-w-full font-sans text-lg sm:text-2xl font-bold bg-transparent border-b border-border focus:border-primary pb-2 text-text-primary focus:outline-none"
               />
             </div>
 
@@ -778,7 +778,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div>
               <span className="label-caps">TÀI LIỆU NỀN TẢNG</span>
-              <h2 className="font-serif text-lg font-bold text-text-primary">
+              <h2 className="font-sans text-lg font-bold text-text-primary">
                 World Bible (Thiết Lập Thế Giới Hư Cấu)
               </h2>
               <p className="text-xs text-text-secondary">
@@ -1110,7 +1110,7 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
               </div>
               <div>
                 <span className="label-caps text-rose-500 text-[10px]">HÀNH ĐỘNG NGUY HIỂM</span>
-                <h3 className="font-serif text-base font-bold text-text-primary">
+                <h3 className="font-sans text-base font-bold text-text-primary">
                   Xóa Vĩnh Viễn Dự Án
                 </h3>
               </div>

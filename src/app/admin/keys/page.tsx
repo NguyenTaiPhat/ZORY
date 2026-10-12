@@ -388,7 +388,7 @@ export default function AdminApiKeysPage() {
                 TỰ ĐỘNG PHÂN BỐ TẢI API
               </span>
             </div>
-            <h2 className="font-serif text-lg sm:text-2xl font-bold text-text-primary mt-1">
+            <h2 className="font-sans text-lg sm:text-2xl font-bold text-text-primary mt-1">
               Quản Trị Album & Bộ Khóa API (Load Balancer)
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
@@ -799,7 +799,7 @@ export default function AdminApiKeysPage() {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <KeyRound className="w-5 h-5 text-primary" />
-                <h3 className="font-serif text-lg font-bold text-text-primary">
+                <h3 className="font-sans text-base sm:text-lg font-bold text-text-primary">
                   Thêm API Key Vào Pool
                 </h3>
               </div>
@@ -1017,7 +1017,7 @@ export default function AdminApiKeysPage() {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <FolderPlus className="w-5 h-5 text-primary" />
-                <h3 className="font-serif text-lg font-bold text-text-primary">
+                <h3 className="font-sans text-base sm:text-lg font-bold text-text-primary">
                   Tạo Album Khóa Theo Tháng
                 </h3>
               </div>

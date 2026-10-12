@@ -203,7 +203,7 @@ export default function NewStudioProjectPage() {
             onChange={(e) => setPremise(e.target.value)}
             rows={4}
             placeholder="Mô tả xung đột trọng tâm, nhân vật trung tâm hoặc bí ẩn cốt lõi của tác phẩm..."
-            className="w-full p-4 font-serif text-sm border border-border bg-surface-elevated text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary"
+            className="w-full p-4 font-sans text-sm border border-border bg-surface-elevated text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary"
             required
           />
         </div>
@@ -218,7 +218,7 @@ export default function NewStudioProjectPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ví dụ: Thiên Đạo Luân Hồi Ký..."
-            className="w-full p-3 font-serif text-base border border-border bg-surface-elevated text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary"
+            className="w-full p-3 font-sans text-base border border-border bg-surface-elevated text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary"
             required
           />
         </div>

@@ -241,7 +241,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
                 </span>
               )}
             </div>
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
+            <h2 className="font-sans text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
               Sổ Tay Thế Giới & Mạng Lưới Nhân Vật
             </h2>
             <p className="text-xs text-text-secondary">
@@ -395,7 +395,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="font-serif font-bold text-base text-text-primary">{item.name}</h4>
+                      <h4 className="font-sans font-bold text-base text-text-primary">{item.name}</h4>
                       {item.aliases && (
                         <span className="text-[11px] text-text-muted italic block">
                           Biệt danh: {item.aliases}
@@ -425,7 +425,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
                     )}
                   </div>
 
-                  <p className="text-xs text-text-secondary leading-relaxed font-serif line-clamp-3 pt-1">
+                  <p className="text-xs text-text-secondary leading-relaxed font-sans line-clamp-3 pt-1">
                     {item.summary}
                   </p>
                 </div>
@@ -458,7 +458,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 !m-0">
           <div className="w-full max-w-lg bg-surface border border-border p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <h3 className="font-serif font-bold text-lg text-text-primary">
+              <h3 className="font-sans font-bold text-lg text-text-primary">
                 {editingEntry ? `Sửa Thực Thể: ${editingEntry.name}` : 'Thêm Thực Thể Lorebook Mới'}
               </h3>
               <button
@@ -602,7 +602,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
                 </div>
                 <div>
                   <span className="label-caps text-primary text-[10px]">ZORY AI LORE EXTRACTION ENGINE</span>
-                  <h3 className="font-serif text-base sm:text-lg font-bold text-text-primary tracking-tight">
+                  <h3 className="font-sans text-base sm:text-lg font-bold text-text-primary tracking-tight">
                     Tự Động Nhận Diện & Trích Xuất Lore
                   </h3>
                 </div>
@@ -703,7 +703,7 @@ export function LorebookManager({ projectId, projectTitle }: LorebookManagerProp
               </div>
               <div>
                 <span className="label-caps text-rose-500 text-[10px]">XÓA KHỎI LOREBOOK</span>
-                <h3 className="font-serif text-base font-bold text-text-primary">
+                <h3 className="font-sans text-base font-bold text-text-primary">
                   Xác Nhận Xóa Thực Thể
                 </h3>
               </div>

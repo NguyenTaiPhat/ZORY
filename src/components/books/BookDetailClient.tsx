@@ -441,7 +441,7 @@ export function BookDetailClient({
                     </div>
                   </div>
                   {r.review && (
-                    <p className="text-xs text-text-secondary leading-relaxed font-serif">
+                    <p className="text-xs text-text-secondary leading-relaxed font-sans">
                       &ldquo;{r.review}&rdquo;
                     </p>
                   )}

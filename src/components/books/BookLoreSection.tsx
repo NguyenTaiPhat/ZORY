@@ -126,7 +126,7 @@ export function BookLoreSection({ bookSlug }: BookLoreSectionProps) {
                 className="p-4 border border-border bg-surface-elevated/40 hover:border-text-secondary transition space-y-2"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-serif font-bold text-base text-text-primary">{item.name}</h4>
+                  <h4 className="font-sans font-bold text-base text-text-primary">{item.name}</h4>
                   <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-surface border border-border text-text-secondary">
                     {item.role || item.category}
                   </span>
@@ -145,7 +145,7 @@ export function BookLoreSection({ bookSlug }: BookLoreSectionProps) {
                   )}
                 </div>
 
-                <p className="text-xs text-text-secondary leading-relaxed font-serif line-clamp-3">
+                <p className="text-xs text-text-secondary leading-relaxed font-sans line-clamp-3">
                   {item.summary}
                 </p>
               </div>

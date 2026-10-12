@@ -29,7 +29,7 @@ export function StoryTreeMapModal({
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2">
             <GitBranch className="w-4 h-4 text-primary" />
-            <h3 className="font-serif font-bold text-lg text-text-primary">
+            <h3 className="font-sans font-bold text-base sm:text-lg text-text-primary">
               Cây Cốt Truyện & Mạng Lưới Nhánh
             </h3>
           </div>
@@ -63,7 +63,7 @@ export function StoryTreeMapModal({
                     <span className="font-mono text-[11px] font-bold text-primary">
                       [CHƯƠNG {ch.chapterNumber.toString().padStart(2, '0')}]
                     </span>
-                    <h4 className="font-serif font-bold text-xs sm:text-sm text-text-primary">
+                    <h4 className="font-sans font-bold text-xs sm:text-sm text-text-primary">
                       {ch.title}
                     </h4>
                   </div>

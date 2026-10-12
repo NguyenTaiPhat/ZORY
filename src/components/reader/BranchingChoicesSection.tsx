@@ -87,7 +87,7 @@ export function BranchingChoicesSection({
             <GitBranch className="w-3.5 h-3.5" />
             ĐA VŨ TRỤ CỐT TRUYỆN (BRANCHING PATHS)
           </span>
-          <h3 className="font-serif font-bold text-lg text-text-primary">
+          <h3 className="font-sans font-bold text-lg text-text-primary">
             Ngã Rẽ Vận Mệnh: Lựa Chọn Của Bạn Là Gì?
           </h3>
           <p className="text-xs text-text-secondary">
@@ -138,12 +138,12 @@ export function BranchingChoicesSection({
                     </span>
                   </div>
 
-                  <h4 className="font-serif font-bold text-sm text-text-primary leading-snug">
+                  <h4 className="font-sans font-bold text-sm text-text-primary leading-snug">
                     {c.choiceText}
                   </h4>
 
                   {c.summary && (
-                    <p className="text-xs text-text-secondary font-serif italic line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-text-secondary font-sans line-clamp-2 leading-relaxed">
                       {c.summary}
                     </p>
                   )}

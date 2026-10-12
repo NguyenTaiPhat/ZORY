@@ -496,7 +496,7 @@ export function AudioPlayer({ book, chapters }: AudioPlayerProps) {
               </span>
             </div>
 
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
+            <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
               {book.title}
             </h1>
             <p className="text-sm text-text-primary font-medium">

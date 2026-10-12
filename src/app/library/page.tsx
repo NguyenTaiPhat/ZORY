@@ -55,7 +55,7 @@ export default function LibraryPage() {
       <div className="pb-4 border-b border-border flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <span className="label-caps">LƯU TRỮ CÁ NHÂN</span>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mt-1">
+          <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mt-1">
             Tủ Sách Của Tôi
           </h1>
           <p className="text-xs text-text-secondary mt-1">
@@ -95,7 +95,7 @@ export default function LibraryPage() {
       ) : items.length === 0 ? (
         <div className="text-center py-20 border border-border bg-surface space-y-4">
           <BookOpen className="w-10 h-10 mx-auto text-text-secondary opacity-40" />
-          <h3 className="font-serif text-lg font-bold text-text-primary">
+          <h3 className="font-sans text-lg font-bold text-text-primary">
             Tủ sách hiện đang để trống
           </h3>
           <p className="text-xs text-text-secondary max-w-sm mx-auto">
@@ -134,7 +134,7 @@ export default function LibraryPage() {
                   <div className="space-y-1">
                     <Link
                       href={`/book/${b.slug}`}
-                      className="font-serif font-bold text-base text-text-primary group-hover:text-primary transition line-clamp-2"
+                      className="font-sans font-bold text-base text-text-primary group-hover:text-primary transition line-clamp-2"
                     >
                       {b.title}
                     </Link>

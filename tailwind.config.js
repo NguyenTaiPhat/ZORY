@@ -43,10 +43,13 @@ module.exports = {
           'serif',
         ],
         mono: [
-          'var(--font-sans)',
-          'Inter',
-          '-apple-system',
-          'BlinkMacSystemFont',
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          'Liberation Mono',
+          'Courier New',
           'monospace',
         ],
         display: [

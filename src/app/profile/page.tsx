@@ -33,7 +33,7 @@ export default async function ProfilePage() {
       <div className="pb-4 border-b border-border flex items-center justify-between">
         <div>
           <span className="label-caps">HỒ SƠ TÁC GIẢ & THÀNH VIÊN</span>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mt-1">
+          <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mt-1">
             Thông Tin Tài Khoản
           </h1>
         </div>
@@ -43,7 +43,7 @@ export default async function ProfilePage() {
       {/* Author Passport Card */}
       <div className="p-8 border border-border bg-surface flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 border border-border bg-surface-elevated text-text-primary flex items-center justify-center font-serif font-bold text-2xl">
+          <div className="w-16 h-16 border border-border bg-surface-elevated text-text-primary flex items-center justify-center font-sans font-bold text-2xl">
             {user.username.charAt(0).toUpperCase()}
           </div>
 

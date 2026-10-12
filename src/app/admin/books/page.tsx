@@ -60,17 +60,17 @@ export default function AdminBooksPage() {
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <span className="label-caps text-[10px] sm:text-xs">MỤC LỤC TÁC PHẨM TOÀN HỆ THỐNG</span>
-          <h2 className="font-serif text-lg sm:text-xl font-bold text-text-primary mt-0.5">
+          <h2 className="font-sans text-lg sm:text-xl font-bold text-text-primary mt-0.5">
             Quản Lý Tác Phẩm ({books.length})
           </h2>
         </div>
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-xs font-mono text-text-secondary">ĐANG TẢI DỮ LIỆU...</div>
+        <div className="py-16 text-center text-xs font-sans text-text-secondary">ĐANG TẢI DỮ LIỆU...</div>
       ) : (
         <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <table className="w-full min-w-[680px] text-left text-xs font-mono">
+          <table className="w-full min-w-[680px] text-left text-xs font-sans">
             <thead>
               <tr className="border-b border-border text-text-secondary uppercase">
                 <th className="py-3 px-3">ẤN PHẨM</th>
@@ -99,7 +99,7 @@ export default function AdminBooksPage() {
                       <div>
                         <Link
                           href={`/book/${b.slug}`}
-                          className="font-serif font-bold text-sm text-text-primary hover:text-primary transition"
+                          className="font-sans font-semibold text-sm text-text-primary hover:text-primary transition"
                         >
                           {b.title}
                         </Link>

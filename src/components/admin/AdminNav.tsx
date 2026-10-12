@@ -18,7 +18,7 @@ export function AdminNav() {
   return (
     <nav className="w-full sm:w-auto">
       {/* Mobile: 2x2 grid rộng rãi, Desktop: thanh tab ngang gọn gàng */}
-      <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 p-1 border border-border bg-surface text-xs font-mono">
+      <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 p-1 border border-border bg-surface text-xs font-sans font-medium">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = item.exact

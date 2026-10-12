@@ -52,7 +52,7 @@ function LoginForm() {
       {/* Header */}
       <div className="space-y-1 text-center">
         <span className="label-caps">ZORY • THÀNH VIÊN</span>
-        <h1 className="font-serif text-2xl font-bold tracking-tight text-text-primary mt-1">
+        <h1 className="font-sans text-2xl font-bold tracking-tight text-text-primary mt-1">
           Đăng Nhập Tài Khoản
         </h1>
         <p className="text-xs text-text-secondary">
@@ -62,7 +62,7 @@ function LoginForm() {
 
 
       {error && (
-        <div className="p-3 border border-error/40 bg-error/10 text-error text-xs font-mono">
+        <div className="p-3 border border-error/40 bg-error/10 text-error text-xs font-sans">
           {error}
         </div>
       )}
@@ -79,7 +79,7 @@ function LoginForm() {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="email@example.com"
-              className="w-full pl-10 pr-4 py-2.5 text-xs font-mono bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary"
+              className="w-full pl-10 pr-4 py-2.5 text-xs font-sans bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary"
               required
             />
           </div>
@@ -96,7 +96,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-10 pr-4 py-2.5 text-xs font-mono bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary"
+              className="w-full pl-10 pr-4 py-2.5 text-xs font-sans bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary"
               required
             />
           </div>
@@ -105,13 +105,13 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-text-primary text-background hover:bg-primary hover:text-white text-xs font-mono border border-border transition disabled:opacity-40"
+          className="w-full py-3 bg-text-primary text-background hover:bg-primary hover:text-white text-xs font-sans font-bold border border-border transition disabled:opacity-40"
         >
           {loading ? 'ĐANG XỬ LÝ...' : 'ĐĂNG NHẬP VÀO HỆ THỐNG'}
         </button>
       </form>
 
-      <div className="text-center text-xs font-mono text-text-secondary pt-4 border-t border-border">
+      <div className="text-center text-xs font-sans text-text-secondary pt-4 border-t border-border">
         <span>Chưa có hồ sơ độc giả? </span>
         <Link
           href="/register"

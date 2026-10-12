@@ -26,10 +26,10 @@ export default async function AdminLayout({
           </div>
           <div>
             <span className="label-caps text-[10px] sm:text-xs text-text-secondary">ZORY PLATFORM CONSOLE</span>
-            <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-text-primary mt-0.5">
+            <h1 className="font-sans text-xl sm:text-2xl font-bold tracking-tight text-text-primary mt-0.5">
               Bảng Điều Khiển Quản Trị
             </h1>
-            <p className="text-[10px] sm:text-xs font-mono text-text-secondary">
+            <p className="text-[10px] sm:text-xs font-sans text-text-secondary">
               QUẢN TRỊ NỘI DUNG, THÀNH VIÊN, ĐỊNH MỨC AI VÀ AUDIT LOGS
             </p>
           </div>

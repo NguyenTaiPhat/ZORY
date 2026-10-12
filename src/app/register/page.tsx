@@ -58,7 +58,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6 bg-surface p-8 sm:p-10 border border-border">
         <div className="text-center space-y-1">
           <span className="label-caps">GIA NHẬP ZORY</span>
-          <h1 className="font-serif text-2xl font-bold tracking-tight text-text-primary mt-1">
+          <h1 className="font-sans text-2xl font-bold tracking-tight text-text-primary mt-1">
             Đăng Ký Hồ Sơ Độc Giả
           </h1>
           <p className="text-xs text-text-secondary">
@@ -67,12 +67,12 @@ export default function RegisterPage() {
         </div>
 
         {error && (
-          <div className="p-3 border border-error/40 bg-error/10 text-error text-xs font-mono">
+          <div className="p-3 border border-error/40 bg-error/10 text-error text-xs font-sans">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
           <div className="space-y-1">
             <label className="label-caps">
               HỌ VÀ TÊN
@@ -82,7 +82,7 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nguyễn Văn A"
-              className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-mono"
+              className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-sans"
             />
           </div>
 
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="nguyenvana"
-              className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-mono"
+              className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-sans"
               required
             />
           </div>
@@ -109,7 +109,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="nguyenvana@gmail.com"
-              className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-mono"
+              className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-sans"
               required
             />
           </div>
@@ -124,7 +124,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-mono"
+                className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-sans"
                 required
               />
             </div>
@@ -138,7 +138,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-mono"
+                className="w-full p-2.5 bg-surface-elevated border border-border text-text-primary focus:outline-none focus:border-primary text-xs font-sans"
                 required
               />
             </div>
@@ -147,13 +147,13 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-text-primary text-background hover:bg-primary hover:text-white text-xs font-mono border border-border transition disabled:opacity-40 mt-2"
+            className="w-full py-3 bg-text-primary text-background hover:bg-primary hover:text-white text-xs font-sans font-bold border border-border transition disabled:opacity-40 mt-2"
           >
             {loading ? 'ĐANG TẠO HỒ SƠ...' : 'HOÀN TẤT ĐĂNG KÝ HỒ SƠ'}
           </button>
         </form>
 
-        <div className="text-center text-xs font-mono text-text-secondary pt-3 border-t border-border">
+        <div className="text-center text-xs font-sans text-text-secondary pt-3 border-t border-border">
           <span>Đã có tài khoản ZORY? </span>
           <Link
             href="/login"
