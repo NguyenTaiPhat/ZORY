@@ -300,6 +300,58 @@ export async function POST(
       });
     }
 
+    // 4. Bắn thông báo cho người theo dõi tác giả khi có chương mới công khai
+    try {
+      const followers = await prisma.authorFollow.findMany({
+        where: { authorId: user.id },
+        select: { followerId: true },
+      });
+
+      if (followers.length > 0 && targetBook) {
+        const latestPublishedChapter = await prisma.chapter.findFirst({
+          where: { bookId: targetBook.id, publishStatus: 'PUBLISHED' },
+          orderBy: { chapterNumber: 'desc' },
+          select: { chapterNumber: true, title: true },
+        });
+
+        if (latestPublishedChapter) {
+          const authorDisplayName = user.name || user.username;
+          const notifTitle = `Chương mới từ tác giả ${authorDisplayName}`;
+          const notifMessage = `Tác phẩm "${targetBook.title}" vừa cập nhật chương ${latestPublishedChapter.chapterNumber}: ${latestPublishedChapter.title}`;
+          const notifLink = `/read/${targetBook.slug}/${latestPublishedChapter.chapterNumber}`;
+
+          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+          const newNotifications = [];
+
+          for (const f of followers) {
+            const existingRecent = await prisma.notification.findFirst({
+              where: {
+                userId: f.followerId,
+                link: notifLink,
+                createdAt: { gte: tenMinutesAgo },
+              },
+            });
+            if (!existingRecent) {
+              newNotifications.push({
+                userId: f.followerId,
+                title: notifTitle,
+                message: notifMessage,
+                link: notifLink,
+              });
+            }
+          }
+
+          if (newNotifications.length > 0) {
+            await prisma.notification.createMany({
+              data: newNotifications,
+            });
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.warn('Lỗi gửi thông báo cho follower:', notifErr);
+    }
+
     const totalChapters = project.studioChapters.length;
     const finalPublishedCount = targetBook ? await prisma.chapter.count({
       where: { bookId: targetBook.id, publishStatus: 'PUBLISHED' },
