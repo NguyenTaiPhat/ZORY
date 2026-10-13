@@ -33,11 +33,13 @@ import {
   ChevronUp,
   Eye,
   EyeOff,
+  History,
 } from 'lucide-react';
 import { cleanAiLiteratureOutput } from '@/lib/ai/cleaner';
 import { formatThousands } from '@/lib/utils';
 import { LorebookManager } from './LorebookManager';
 import { CoverPickerModal } from './CoverPickerModal';
+import { ChapterVersionModal } from './ChapterVersionModal';
 
 interface StudioWorkspaceProps {
   initialProject: any;
@@ -168,6 +170,28 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [mobileChapterListOpen, setMobileChapterListOpen] = useState(false);
+  const [versionModalOpen, setVersionModalOpen] = useState(false);
+
+  const handleVersionRestored = (restored: {
+    title: string;
+    content: string;
+    wordCount: number;
+  }) => {
+    setChapterTitle(restored.title);
+    setChapterContent(restored.content);
+    const updatedList = [...chapters];
+    if (updatedList[activeChapterIndex]) {
+      updatedList[activeChapterIndex] = {
+        ...updatedList[activeChapterIndex],
+        title: restored.title,
+        content: restored.content,
+        wordCount: restored.wordCount,
+      };
+      setChapters(updatedList);
+    }
+    setSaveMessage('Đã khôi phục phiên bản');
+    setTimeout(() => setSaveMessage(''), 2500);
+  };
 
   // Đồng bộ tiêu đề tab trình duyệt theo tên tác phẩm & chương đang biên tập
   useEffect(() => {
@@ -613,6 +637,26 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   const handleApplyAiResult = () => {
     if (!aiResult) return;
     const cleaned = cleanAiLiteratureOutput(aiResult);
+
+    // Tự động chụp mốc phiên bản an toàn trước khi áp dụng AI
+    if (chapterContent && chapterContent.trim()) {
+      const opLabel = aiOperation === 'CONTINUE' ? 'viết tiếp' : 'trau chuốt';
+      fetch(
+        `/api/studio/projects/${project.id}/chapters/${currentChapter.chapterNumber}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: chapterTitle || currentChapter.title,
+            content: chapterContent,
+            versionName: `Trước khi AI ${opLabel}`,
+            changeNote: `Tự động lưu dự phòng trước khi AI áp dụng`,
+            source: 'AI_AUTO',
+          }),
+        }
+      ).catch((err) => console.warn('Lỗi auto-snapshot AI:', err));
+    }
+
     if (aiOperation === 'CONTINUE') {
       setChapterContent((prev: string) => (prev ? `${prev}\n\n${cleaned}` : cleaned));
     } else if (aiOperation === 'REWRITE') {
@@ -949,6 +993,15 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
                     <span>{saveMessage}</span>
                   </span>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setVersionModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border bg-surface-elevated hover:bg-surface hover:border-primary text-text-primary text-xs font-sans font-semibold transition interactive-press"
+                  title="Xem lịch sử các phiên bản, so sánh diff và khôi phục bản cũ"
+                >
+                  <History className="w-3.5 h-3.5 text-primary" />
+                  <span>LỊCH SỬ</span>
+                </button>
                 <button
                   onClick={handleSaveChapter}
                   disabled={isSaving}
@@ -1888,6 +1941,17 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
           </div>
         </div>
       )}
+
+      {/* MODAL LỊCH SỬ & KHÔI PHỤC BẢN THẢO */}
+      <ChapterVersionModal
+        isOpen={versionModalOpen}
+        onClose={() => setVersionModalOpen(false)}
+        projectId={project.id}
+        chapterNumber={currentChapter.chapterNumber}
+        currentTitle={chapterTitle || currentChapter.title}
+        currentContent={chapterContent}
+        onRestore={handleVersionRestored}
+      />
 
       {/* MODAL TÙY CHỈNH ẢNH BÌA TÁC PHẨM */}
       <CoverPickerModal
