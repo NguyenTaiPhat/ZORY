@@ -240,9 +240,18 @@ export function BookDetailClient({
 
             <p className="text-xs uppercase tracking-wider font-semibold text-text-muted">
               Tác giả:{' '}
-              <span className="text-text-primary font-bold">
-                {book.author?.name || book.author?.username || 'Tiêu Dao Mặc Khách'}
-              </span>
+              {book.author?.username ? (
+                <Link
+                  href={`/author/${book.author.username}`}
+                  className="text-text-primary font-bold hover:text-primary transition underline underline-offset-4 decoration-border hover:decoration-primary"
+                >
+                  {book.author?.name || book.author?.username}
+                </Link>
+              ) : (
+                <span className="text-text-primary font-bold">
+                  {book.author?.name || book.authorName || 'Tiêu Dao Mặc Khách'}
+                </span>
+              )}
             </p>
           </div>
 
