@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -15,6 +15,8 @@ model User {
   passwordHash    String
   avatarUrl       String?
   bio             String?
+  publishingSchedule String?
+  bannerUrl       String?
   role            String           @default("USER") // USER, AUTHOR, ADMIN
   isBanned        Boolean          @default(false)
   aiTokensQuota   Int              @default(50000)
@@ -33,6 +35,8 @@ model User {
   libraryItems    LibraryItem[]
   bookmarks       Bookmark[]
   notifications   Notification[]
+  followers       AuthorFollow[]   @relation("AuthorFollowers")
+  following       AuthorFollow[]   @relation("UserFollowing")
   reports         Report[]
   aiProjects      AiProject[]
   aiUsages        AiUsage[]
@@ -240,6 +244,20 @@ model Bookmark {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+}
+
+model AuthorFollow {
+  id          String   @id @default(cuid())
+  followerId  String
+  authorId    String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  author      User     @relation("AuthorFollowers", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, authorId])
+  @@index([followerId])
+  @@index([authorId])
 }
 
 model Notification {
