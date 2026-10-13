@@ -363,8 +363,28 @@ model StudioChapter {
   updatedAt     DateTime  @updatedAt
 
   project       AiProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versions      StudioChapterVersion[]
 
   @@unique([projectId, chapterNumber])
+}
+
+model StudioChapterVersion {
+  id            String        @id @default(cuid())
+  chapterId     String
+  projectId     String
+  chapterNumber Int
+  title         String
+  content       String        @default("")
+  wordCount     Int           @default(0)
+  versionName   String?
+  changeNote    String?
+  source        String        @default("MANUAL") // MANUAL, AI_AUTO, PRE_RESTORE
+  createdAt     DateTime      @default(now())
+
+  chapter       StudioChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+  @@index([projectId, chapterNumber])
 }
 
 model LoreEntry {
