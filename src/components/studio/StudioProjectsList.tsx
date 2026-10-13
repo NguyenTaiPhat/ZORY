@@ -566,6 +566,7 @@ export function StudioProjectsList({
           currentCoverUrl={projectToChangeCover.coverUrl || null}
           bookTitle={projectToChangeCover.title}
           genre={projectToChangeCover.genre}
+          storySummary={projectToChangeCover.premise}
           projectId={projectToChangeCover.id}
           bookSlug={projectToChangeCover.publishedBookSlug || undefined}
           onSave={(newUrl) => {

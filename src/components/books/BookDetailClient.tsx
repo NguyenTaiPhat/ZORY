@@ -498,6 +498,7 @@ export function BookDetailClient({
         currentCoverUrl={coverUrl}
         bookTitle={book.title}
         genre={book.genres?.[0]?.genre?.name || 'Văn học'}
+        storySummary={book.summary}
         bookSlug={book.slug}
         onSave={(newUrl) => {
           setCoverUrl(newUrl);

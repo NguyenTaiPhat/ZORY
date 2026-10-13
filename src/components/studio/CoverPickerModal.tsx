@@ -9,6 +9,7 @@ import {
   RotateCw,
   ImageIcon,
   Camera,
+  Copy,
 } from 'lucide-react';
 
 interface CoverPickerModalProps {
@@ -17,6 +18,7 @@ interface CoverPickerModalProps {
   currentCoverUrl: string | null;
   bookTitle: string;
   genre: string;
+  storySummary?: string | null;
   projectId?: string;
   bookSlug?: string;
   onSave: (newCoverUrl: string) => Promise<void> | void;
@@ -27,6 +29,8 @@ export function CoverPickerModal({
   onClose,
   currentCoverUrl,
   bookTitle,
+  genre,
+  storySummary,
   projectId,
   bookSlug,
   onSave,
@@ -37,9 +41,24 @@ export function CoverPickerModal({
   const [customUrlInput, setCustomUrlInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [promptCopied, setPromptCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const coverPrompt = `Tạo ảnh bìa sách dọc tỷ lệ 2:3 cho tác phẩm có tên "${bookTitle}"${genre ? `, thể loại ${genre}` : ''}.\n\nNội dung câu chuyện: ${storySummary?.trim() || 'Chưa có tóm tắt. Hãy tạo hình ảnh gợi mở dựa trên tên truyện và thể loại.'}\n\nYêu cầu: Hình ảnh giàu cảm xúc, có điểm nhấn thị giác rõ ràng, thể hiện đúng không khí và chủ đề câu chuyện. Bố cục như bìa sách chuyên nghiệp, chừa khoảng trống hợp lý để đặt tên truyện, màu sắc và ánh sáng hài hòa. Không tạo chữ, ký tự, watermark hoặc logo trong ảnh. Ưu tiên minh họa đẹp, sắc nét, phù hợp làm bìa tiểu thuyết.`;
+
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(coverPrompt);
+      setPromptCopied(true);
+      setCopyError('');
+      window.setTimeout(() => setPromptCopied(false), 2000);
+    } catch {
+      setCopyError('Không thể sao chép tự động. Hãy chọn và sao chép nội dung prompt.');
+    }
+  };
 
   const compressImage = async (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -181,7 +200,7 @@ export function CoverPickerModal({
 
   return (
     <div className="fixed !m-0 inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-surface border border-border p-5 sm:p-6 max-w-2xl w-full space-y-5 shadow-2xl">
+      <div className="bg-surface border border-border p-5 sm:p-6 max-w-2xl w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto space-y-5 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2.5">
@@ -236,6 +255,31 @@ export function CoverPickerModal({
 
           {/* Cột phải: Các phương thức thiết lập ảnh bìa */}
           <div className="md:col-span-7 space-y-4">
+            <section className="space-y-2 rounded-sm border border-border bg-surface-elevated/40 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-text-primary">Gợi ý prompt tạo ảnh bìa</h4>
+                  <p className="mt-1 text-xs/5 text-text-secondary">Copy prompt này sang AI tạo ảnh, rồi tải ảnh hoàn chỉnh lên.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyPrompt}
+                  className="shrink-0 flex items-center gap-1.5 border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-text-primary transition hover:bg-surface-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  {promptCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {promptCopied ? 'Đã sao chép' : 'Sao chép'}
+                </button>
+              </div>
+              <textarea
+                readOnly
+                aria-label="Prompt gợi ý tạo ảnh bìa"
+                value={coverPrompt}
+                rows={5}
+                className="w-full resize-y border border-border bg-surface px-2.5 py-2 text-xs/5 text-text-secondary focus:border-primary focus:outline-none"
+              />
+              <p aria-live="polite" className="min-h-4 text-xs text-error">{copyError}</p>
+            </section>
+
             {/* Tabs */}
             <div className="flex border-b border-border text-xs font-sans font-semibold">
               <button
