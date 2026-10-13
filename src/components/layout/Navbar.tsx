@@ -12,8 +12,10 @@ import {
   Menu,
   X,
   Sparkles,
+  PenTool,
 } from 'lucide-react';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { NotificationBell } from './NotificationBell';
 
 interface UserSession {
   id: string;
@@ -136,59 +138,71 @@ export function Navbar() {
 
           {/* User Account State */}
           {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 p-1 rounded-md border border-border bg-surface-elevated hover:border-text-primary transition interactive-press"
-                title="Tài khoản cá nhân"
-              >
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name || user.username}
-                    className="w-6 h-6 rounded-sm object-cover"
-                  />
-                ) : (
-                  <div className="w-6 h-6 rounded-sm bg-primary text-white flex items-center justify-center font-bold text-[11px]">
-                    {user.username.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="hidden md:inline text-xs font-semibold text-text-primary max-w-[90px] truncate">
-                  {user.name || user.username}
-                </span>
-              </button>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
 
-              {userDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-md bg-surface border border-border shadow-xl py-2 z-50">
-                  <div className="px-3.5 py-2 border-b border-border">
-                    <p className="text-xs font-bold text-text-primary truncate">
-                      {user.name || user.username}
-                    </p>
-                    <p className="text-[11px] text-text-muted truncate">
-                      {user.email}
-                    </p>
-                    <span className="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-surface-elevated border border-border text-text-secondary uppercase tracking-wider">
-                      {user.role}
-                    </span>
-                  </div>
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 p-1 rounded-md border border-border bg-surface-elevated hover:border-text-primary transition interactive-press"
+                  title="Tài khoản cá nhân"
+                >
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name || user.username}
+                      className="w-6 h-6 rounded-sm object-cover"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-sm bg-primary text-white flex items-center justify-center font-bold text-[11px]">
+                      {user.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="hidden md:inline text-xs font-semibold text-text-primary max-w-[90px] truncate">
+                    {user.name || user.username}
+                  </span>
+                </button>
 
-                  <Link
-                    href="/profile"
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-primary hover:bg-surface-elevated font-medium"
-                  >
-                    <UserIcon className="w-3.5 h-3.5 text-text-muted" />
-                    <span>Hồ sơ cá nhân</span>
-                  </Link>
+                {userDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-md bg-surface border border-border shadow-xl py-2 z-50">
+                    <div className="px-3.5 py-2 border-b border-border">
+                      <p className="text-xs font-bold text-text-primary truncate">
+                        {user.name || user.username}
+                      </p>
+                      <p className="text-[11px] text-text-muted truncate">
+                        {user.email}
+                      </p>
+                      <span className="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-surface-elevated border border-border text-text-secondary uppercase tracking-wider">
+                        {user.role}
+                      </span>
+                    </div>
 
-                  <Link
-                    href="/library"
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-primary hover:bg-surface-elevated font-medium"
-                  >
-                    <Bookmark className="w-3.5 h-3.5 text-text-muted" />
-                    <span>Tủ sách của tôi</span>
-                  </Link>
+                    <Link
+                      href={`/author/${user.username}`}
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-primary hover:bg-surface-elevated font-medium"
+                    >
+                      <PenTool className="w-3.5 h-3.5 text-text-muted" />
+                      <span>Trang tác giả của tôi</span>
+                    </Link>
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-primary hover:bg-surface-elevated font-medium"
+                    >
+                      <UserIcon className="w-3.5 h-3.5 text-text-muted" />
+                      <span>Hồ sơ cá nhân</span>
+                    </Link>
+
+                    <Link
+                      href="/library"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-primary hover:bg-surface-elevated font-medium"
+                    >
+                      <Bookmark className="w-3.5 h-3.5 text-text-muted" />
+                      <span>Tủ sách của tôi</span>
+                    </Link>
 
                   <Link
                     href="/studio"
