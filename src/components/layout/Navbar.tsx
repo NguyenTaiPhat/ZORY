@@ -236,6 +236,7 @@ export function Navbar() {
                 </div>
               )}
             </div>
+          </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2 whitespace-nowrap">
               <Link
