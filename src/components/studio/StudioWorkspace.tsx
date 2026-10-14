@@ -45,6 +45,8 @@ interface StudioWorkspaceProps {
   initialProject: any;
 }
 
+const AI_CONTEXT_WINDOW_CHARS = 6000;
+
 export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
   const router = useRouter();
   const [project, setProject] = useState(initialProject);
@@ -510,7 +512,9 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operation: 'SUGGEST_DIRECTIONS',
-          prompt: chapterContent ? chapterContent.slice(-800) : (currentChapter.summary || project.premise || ''),
+          prompt: chapterContent
+            ? chapterContent.slice(-AI_CONTEXT_WINDOW_CHARS)
+            : currentChapter.summary || project.premise || '',
           projectId: project.id,
           projectGenre: project.genre,
           projectPremise: project.premise,
@@ -601,7 +605,10 @@ export function StudioWorkspace({ initialProject }: StudioWorkspaceProps) {
         body: JSON.stringify({
           operation: aiOperation,
           prompt: chapterContent || (currentChapter.summary ? `Cốt truyện chương: ${currentChapter.summary}` : ''),
-          selectedText: aiOperation === 'REWRITE' ? textToRewrite : (selectedText || (chapterContent ? chapterContent.slice(-800) : '')),
+          selectedText:
+            aiOperation === 'REWRITE'
+              ? textToRewrite
+              : selectedText || (chapterContent ? chapterContent.slice(-AI_CONTEXT_WINDOW_CHARS) : ''),
           instruction: aiInstruction,
           directionSummary: activeDirectionSummary,
           length: aiLength,

@@ -152,7 +152,7 @@ QUY TẮC BẮT BUỘC: Giữ đúng 100% tên nhân vật, giới tính, mối 
 
     let targetTokens = 8192;
     let lengthInstruction =
-      'QUY MÔ ĐẠI CHƯƠNG TRƯỜNG THIÊN (2500 ĐẾN 3500 TỪ): Hãy viết một đại chương trọn vẹn, phong phú, đồ sộ với dung lượng lớn. Triển khai đầy đủ các phân cảnh: thiết lập bối cảnh không gian, nội tâm giằng xé, đối thoại thăm dò, mâu thuẫn leo thang, cao trào hành động và điểm nghẽn kịch tính (cliffhanger) cuối chương. TUYỆT ĐỐI KHÔNG VIẾT TÓM TẮT HAY NHẢY CÓC THỜI GIAN.';
+      'QUY MÔ ĐẠI CHƯƠNG TRƯỜNG THIÊN (2500 ĐẾN 3500 TỪ): Viết một chương trọn vẹn với cảnh có mục tiêu, lực cản và hệ quả rõ ràng. Ưu tiên tương tác, xung đột, lựa chọn và thay đổi trong quan hệ nhân vật; dùng bối cảnh và nội tâm vừa đủ để nâng đỡ diễn biến. TUYỆT ĐỐI KHÔNG TÓM TẮT HAY NHẢY CÓC QUA BIẾN CỐ QUAN TRỌNG.';
 
     if (length === 'short') {
       targetTokens = 2000;
@@ -165,11 +165,11 @@ QUY TẮC BẮT BUỘC: Giữ đúng 100% tên nhân vật, giới tính, mối 
     } else if (length === 'detailed') {
       targetTokens = 5500;
       lengthInstruction =
-        'QUY MÔ PHÂN CẢNH DÀI (1800 - 2400 TỪ): Miêu tả sâu sắc nhiều góc nhìn, đào sâu tâm lý, không gian và diễn biến kịch tính.';
+        'QUY MÔ PHÂN CẢNH DÀI (1800 - 2400 TỪ): Phát triển một mạch cảnh liền lạc, đào sâu lựa chọn, mâu thuẫn và quan hệ giữa các nhân vật. Giữ nguyên một điểm nhìn xuyên suốt, trừ khi tác giả yêu cầu đổi POV.';
     } else if (length === 'epic' || length === 'long') {
       targetTokens = 8192;
       lengthInstruction =
-        'QUY MÔ ĐẠI CHƯƠNG TRƯỜNG THIÊN (2500 ĐẾN 3500 TỪ): Hãy viết một đại chương trọn vẹn, phong phú, đồ sộ với dung lượng lớn (khoảng 2500 đến 3500 từ). Triển khai sâu sắc từng chi tiết, từng nhịp thở, không bỏ qua bất kỳ chuyển biến nào.';
+        'QUY MÔ ĐẠI CHƯƠNG TRƯỜNG THIÊN (2500 ĐẾN 3500 TỪ): Viết một chương trọn vẹn với các cảnh nối tiếp có nguyên nhân và hệ quả. Dùng dung lượng để phát triển xung đột, tương tác, quyết định và hậu quả; không kéo dài cảnh bằng cách tả chậm từng cử động.';
     }
 
     let constructedPrompt = prompt || '';
@@ -216,7 +216,7 @@ ${selectedText || prompt || ''}
         ? `\n\n[HƯỚNG ĐI ĐÃ ĐƯỢC TÁC GIẢ PHÊ DUYỆT - BẮT BUỘC BÁM SÁT 100%]:\n"${directionSummary}"\nCHỈ DẪN NGHIÊM NGẶT: Bạn bắt buộc phải triển khai câu văn bám sát 100% dàn ý hướng đi này, tuyệt đối không được tự ý thay đổi mạch truyện hay bẻ lái ngoài ý đồ tác giả.\n`
         : '';
 
-      constructedPrompt = `Nhiệm vụ: Viết tiếp diễn biến tiếp theo của tác phẩm một cách tự nhiên, cuốn hút, điện ảnh và liền mạch.\n${dbGenre ? `Thể loại tác phẩm: ${dbGenre}.\n` : ''}${genreDirective}\n${lengthInstruction}${directionDirective}\n\nĐOẠN TRƯỚC ĐÓ:\n${selectedText || prompt}\n\nYêu cầu bổ sung từ tác giả: ${instruction || 'Duy trì nhịp điệu và phong cách văn học đỉnh cao.'}\nLưu ý: Bắt đầu viết tiếp nội dung ngay lập tức, tuyệt đối không viết lời dẫn hay câu chào.`;
+      constructedPrompt = `Nhiệm vụ: Viết tiếp diễn biến tiếp theo, giữ liên tục nguyên nhân - hệ quả, tính cách và quan hệ nhân vật của tác phẩm.\n${dbGenre ? `Thể loại tác phẩm: ${dbGenre}.\n` : ''}${genreDirective}\n${lengthInstruction}${directionDirective}\n\nĐOẠN TRƯỚC ĐÓ:\n${selectedText || prompt}\n\nYêu cầu bổ sung từ tác giả: ${instruction || 'Duy trì nhịp điệu và phong cách văn học.'}\nLưu ý: Bắt đầu viết tiếp nội dung ngay lập tức, tuyệt đối không viết lời dẫn hay câu chào.`;
     } else if (operation === 'REWRITE') {
       const sourceText = selectedText || prompt;
       const approxWords = sourceText ? sourceText.trim().split(/\s+/).length : 200;
@@ -254,25 +254,26 @@ ${instruction ? `Yêu cầu bổ sung của tác giả: ${instruction}` : ''}`;
     const baseSystemPrompt = `Bạn là Đại Tác Giả Văn Học & Biên Kịch Trưởng Cấp Cao của ZORY Literary Engine.
 Bạn sáng tác tiểu thuyết với trình độ bậc thầy: câu chữ giàu chất thơ và điện ảnh, tâm lý nhân vật sắc sảo, logic chặt chẽ, tình tiết lớp lang cuốn hút.${genreDirective}
 
-BỘ NGUYÊN TẮC VĂN HỌC ĐỈNH CAO:
-1. NGUYÊN TẮC "SHOW, DON'T TELL" (TẢ CẢNH NGỤ TÌNH THAY VÌ KỂ LỂ):
-   - Tuyệt đối KHÔNG kể lể khô khan ("Hắn rất đau đớn", "Hắn vô cùng tức giận", "Trận chiến rất ác liệt").
-   - Hãy MIÊU TẢ trực quan qua ngũ giác: gân xanh giật giật nơi thái dương, nhịp thở đứt quãng, mùi gỉ sắt của máu, hơi lạnh thấu xương của sương đêm, tiếng kiếm rít xé gió, từng hạt bụi li ti run rẩy dưới áp lực kình khí.
-2. TUYỆT ĐỐI CẤM TÓM TẮT ĐỐT CHÁY GIAI ĐOẠN:
-   - CẤM các câu văn tóm lược lướt qua sự việc (như: "Sau mấy ngày tu luyện...", "Trận chiến diễn ra một hồi lâu và hắn thắng...").
-   - Mỗi cảnh phải được khắc họa từng giây, từng nhịp thở, từng chuyển động vi tế và từng toan tính chiến thuật như máy quay điện ảnh quay chậm.
-3. ĐỐI THOẠI ĐA TẦNG & TÂM LÝ SÂU SẮC (SUBTEXT & CHARACTER VOICE):
-   - Đối thoại không được ngô nghê, sáo rỗng. Mỗi lời nói phải mang hàm ý, thăm dò, giấu giếm toan tính hoặc thể hiện rõ vị thế và bản sắc nhân vật.
-   - Thể hiện sự đấu trí IQ cao: nhân vật chính và đối thủ đều có não, toan tính logic, không có tình tiết coi thường trí tuệ độc giả.
-4. CẤU TRÚC PHÂN CẢNH VÀ NHỊP ĐỘ (PACING & DRAMATIC BEATS):
-   - Mở màn phân cảnh: Thiết lập không gian, áp lực và bầu không khí ngột ngạt.
-   - Phát triển: Leo thang mâu thuẫn, cài cắm chi tiết ẩn và thăm dò.
-   - Cao trào: Xung đột bùng nổ đỉnh điểm qua hành động quyết liệt hoặc hé lộ cú ngoặt chấn động.
-   - Kết thúc phân cảnh: Điểm nhấn đầy dư vị hoặc cú móc (cliffhanger) khiến người đọc bồn chồn muốn đọc tiếp ngay.
-5. QUY TẮC ĐỊNH DẠNG:
+BỘ NGUYÊN TẮC VĂN HỌC — ƯU TIÊN NHÂN VẬT VÀ TƯƠNG TÁC:
+1. NHÂN VẬT DẪN DẮT CẢNH:
+   - Mỗi cảnh cần có một nhân vật muốn đạt điều gì ngay lúc này và một trở lực cụ thể; khi có nhân vật khác trong cảnh, cho họ mục tiêu hoặc lập trường riêng.
+   - Nhân vật chủ động lựa chọn, hành động và phản ứng với nhau. Lời nói hoặc hành động của người này phải làm người kia đổi cách đáp, thế chủ động, mức tin tưởng, thông tin được hé lộ hoặc quyết định tiếp theo.
+   - Ưu tiên tương tác giữa các nhân vật khi cốt truyện và bối cảnh cho phép. Không ép thêm người vào cảnh độc thoại, cảnh hành động đơn độc hoặc khoảnh khắc nội tâm có chủ đích.
+2. ĐỐI THOẠI CÓ TÁC ĐỘNG:
+   - Giữ giọng nói, vốn hiểu biết và cách né tránh riêng của từng nhân vật; không để mọi người nói cùng một giọng.
+   - Dùng đối thoại, im lặng, cử chỉ và lựa chọn để bộc lộ cảm xúc hoặc ý đồ. Mỗi lượt trao đổi nên làm quan hệ hay xung đột tiến triển; tránh đối thoại chỉ để giải thích điều người đọc đã biết.
+3. GIỮ POV ỔN ĐỊNH:
+   - Tiếp nối điểm nhìn đã có trong đoạn trước. Nếu chưa xác định, chọn một POV phù hợp và giữ xuyên suốt cảnh/chương.
+   - Không chuyển vào suy nghĩ của nhân vật khác và không đổi POV giữa cảnh trừ khi tác giả yêu cầu rõ.
+4. BỐI CẢNH PHỤC VỤ DIỄN BIẾN:
+   - Chỉ chọn chi tiết không gian, giác quan và nội tâm giúp hiểu lựa chọn, cản trở hoặc trạng thái của nhân vật. Tránh lặp mô tả thời tiết, ánh sáng, nhịp thở hay cảm xúc.
+   - Dùng nhịp kể linh hoạt. Không kéo chậm mọi chuyển động; tóm lược khoảng thời gian không có biến chuyển đáng kể.
+5. CẤU TRÚC VÀ ĐỊNH DẠNG:
+   - Để mâu thuẫn leo thang qua hành động và hệ quả, rồi kết cảnh bằng một thay đổi, lựa chọn khó hoặc câu hỏi mở có ý nghĩa.
    - BẮT ĐẦU TRỰC TIẾP bằng chính văn bản thảo, TUYỆT ĐỐI KHÔNG viết lời chào hay lời dẫn ("Dưới đây là...", "Đây là đoạn văn...").
    - KHÔNG dùng dấu ngăn cách (***, ---, ###) ở đầu văn bản.
-   - KHÔNG viết lời chúc hay lời kết xã giao ở cuối.${loreContext}`;
+   - KHÔNG viết lời chúc hay lời kết xã giao ở cuối.
+${loreContext}`;
 
     const isRewrite = operation === 'REWRITE';
     const isSuggestDirections = operation === 'SUGGEST_DIRECTIONS';

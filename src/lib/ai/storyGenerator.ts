@@ -46,7 +46,7 @@ Quy mô: "${estimatedLength}" (Dự kiến tạo lộ trình ${chapterCount} ch�
 YÊU CẦU ĐẦU RA (ĐỊNH DẠNG JSON DUY NHẤT, KHÔNG THÊM LỜI DẪN):
 {
   "chapter1Title": "Tên Chương 1 thật hấp dẫn và gợi mở",
-  "chapter1Content": "Viết chính văn Chương 1 ĐỒ SỘ, SỐNG ĐỘNG VÀ ĐẬM CHẤT ĐIỆN ẢNH (QUY MÔ ĐẠI CHƯƠNG 2500 ĐẾN 3500 TỪ). Áp dụng nguyên tắc 'Show, Don't Tell', miêu tả chi tiết ngũ giác, tâm lý đấu tranh, đối thoại đa tầng và xung đột leo thang gay gắt. CẤM TUYỆT ĐỐI VIẾT TÓM TẮT HAY NHẢY CÓC THỜI GIAN.",
+  "chapter1Content": "Viết chính văn Chương 1 (2500 đến 3500 từ), sống động và giàu cảm xúc. Áp dụng 'Show, Don't Tell' có chọn lọc, nhưng đặt mục tiêu, lựa chọn và tương tác nhân vật làm trọng tâm: nhân vật chính muốn đạt điều gì, ai hoặc điều gì cản trở, lời nói/hành động của mỗi người làm tình thế thay đổi ra sao. Cho nhân vật có giọng nói và mục tiêu riêng; dùng đối thoại, phản ứng và hệ quả để phát triển xung đột hoặc quan hệ. Giữ một POV ổn định; chỉ chuyển POV nếu được yêu cầu. Bối cảnh và chi tiết giác quan chỉ xuất hiện khi ảnh hưởng đến lựa chọn hoặc cảm xúc, không kéo chậm mọi chuyển động. CẤM VIẾT TÓM TẮT HAY NHẢY CÓC QUA BIẾN CỐ QUAN TRỌNG.",
   "chapters": [
     ${Array.from({ length: chapterCount }, (_, i) => `{"chapterNumber": ${i + 1}, "title": "Chương ${i + 1}: ...", "summary": "Tóm tắt cốt truyện và bước ngoặt chương ${i + 1}"}`).join(',\n    ')}
   ],
