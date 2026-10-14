@@ -9,6 +9,33 @@ export async function GET(req: Request) {
     const guestId = searchParams.get('guestId');
     const user = await getCurrentUser();
 
+    if (searchParams.get('recent') === '1') {
+      if (!user) {
+        return NextResponse.json(
+          { progress: null },
+          { headers: { 'Cache-Control': 'private, no-store' } }
+        );
+      }
+
+      const progress = await prisma.readingProgress.findFirst({
+        where: { userId: user.id },
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          book: {
+            select: { title: true, slug: true, coverUrl: true },
+          },
+          chapter: {
+            select: { chapterNumber: true, title: true },
+          },
+        },
+      });
+
+      return NextResponse.json(
+        { progress },
+        { headers: { 'Cache-Control': 'private, no-store' } }
+      );
+    }
+
     if (!bookId) {
       return NextResponse.json({ error: 'Thiếu bookId' }, { status: 400 });
     }

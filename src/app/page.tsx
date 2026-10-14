@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { unstable_cache } from 'next/cache';
 import prisma from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { RecentProgress } from '@/components/books/RecentProgress';
 import {
   BookOpen,
   Headphones,
@@ -17,7 +17,7 @@ import {
 import { formatNumber, formatDateVi } from '@/lib/utils';
 import { EmptyState } from '@/components/ui/EmptyState';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 const getCachedHomepageData = unstable_cache(
   async () => {
@@ -77,34 +77,8 @@ const getCachedHomepageData = unstable_cache(
 );
 
 export default async function HomePage() {
-  const [user, homepageData] = await Promise.all([getCurrentUser(), getCachedHomepageData()]);
+  const homepageData = await getCachedHomepageData();
   const { featuredBook, popularBooks, latestBooks, completedBooks, genres } = homepageData;
-
-  // 6. Lịch sử đọc dở
-  let recentProgress = null;
-  if (user) {
-    recentProgress = await prisma.readingProgress.findFirst({
-      where: { userId: user.id },
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        book: {
-          select: {
-            title: true,
-            slug: true,
-            coverUrl: true,
-            authorName: true,
-          },
-        },
-        chapter: {
-          select: {
-            id: true,
-            chapterNumber: true,
-            title: true,
-          },
-        },
-      },
-    });
-  }
 
   const hasPublishedBooks = Boolean(
     featuredBook || popularBooks.length || latestBooks.length || completedBooks.length
@@ -278,41 +252,7 @@ export default async function HomePage() {
       )}
 
       {/* 2. RECENT PROGRESS — MINIMAL ARCHIVE TICKET */}
-      {recentProgress && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="p-4 rounded-md border border-border bg-surface flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <img
-                src={recentProgress.book.coverUrl || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=120'}
-                alt={recentProgress.book.title}
-                className="w-10 h-14 object-cover rounded-sm border border-border flex-shrink-0"
-              />
-              <div className="min-w-0 space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="label-caps text-primary">Đang đọc dở</span>
-                  <span className="text-[11px] text-text-muted">
-                    • Tiến độ: {Math.round(recentProgress.progressPercent)}%
-                  </span>
-                </div>
-                <h2 className="text-sm font-bold text-text-primary truncate">
-                  {recentProgress.book.title}
-                </h2>
-                <p className="text-xs text-text-secondary truncate">
-                  Chương {recentProgress.chapter.chapterNumber}: {recentProgress.chapter.title}
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href={`/read/${recentProgress.book.slug}/${recentProgress.chapter.chapterNumber}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-surface-elevated hover:bg-border border border-border text-xs font-bold text-text-primary uppercase tracking-wider transition flex-shrink-0"
-            >
-              <span>Tiếp tục đọc</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </section>
-      )}
+      <RecentProgress />
 
       {/* 3. TUYỂN TẬP BIÊN TẬP (CURATOR'S COLLECTION) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
