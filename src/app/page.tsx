@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { unstable_cache } from 'next/cache';
 import prisma from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import {
@@ -18,11 +19,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage() {
-  const [user, featuredBook, popularBooks, latestBooks, completedBooks, genres] =
-    await Promise.all([
-      getCurrentUser(),
-      // Independent homepage queries run together to avoid adding each DB round trip.
+const getCachedHomepageData = unstable_cache(
+  async () => {
+    const [featuredBook, popularBooks, latestBooks, completedBooks, genres] = await Promise.all([
       prisma.book.findFirst({
         where: { isFeatured: true, publishStatus: 'PUBLISHED' },
         include: {
@@ -40,7 +39,7 @@ export default async function HomePage() {
         orderBy: { readCount: 'desc' },
         include: {
           genres: { include: { genre: true } },
-          chapters: { select: { id: true } },
+          _count: { select: { chapters: true } },
         },
       }),
       prisma.book.findMany({
@@ -70,6 +69,16 @@ export default async function HomePage() {
         },
       }),
     ]);
+
+    return { featuredBook, popularBooks, latestBooks, completedBooks, genres };
+  },
+  ['homepage-data-v1'],
+  { revalidate: 60 }
+);
+
+export default async function HomePage() {
+  const [user, homepageData] = await Promise.all([getCurrentUser(), getCachedHomepageData()]);
+  const { featuredBook, popularBooks, latestBooks, completedBooks, genres } = homepageData;
 
   // 6. Lịch sử đọc dở
   let recentProgress = null;
@@ -356,7 +365,7 @@ export default async function HomePage() {
                 </p>
                 <div className="flex items-center justify-between text-[10px] text-text-secondary pt-0.5 border-t border-border/50">
                   <span>{formatNumber(book.readCount)} đọc</span>
-                  <span className="font-semibold text-text-primary">{book.chapters.length} chương</span>
+                  <span className="font-semibold text-text-primary">{book._count.chapters} chương</span>
                 </div>
               </div>
             </Link>
