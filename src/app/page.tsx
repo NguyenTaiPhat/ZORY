@@ -19,63 +19,57 @@ import { EmptyState } from '@/components/ui/EmptyState';
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const user = await getCurrentUser();
-
-  // 1. Tác phẩm tiêu biểu cho Hero
-  const featuredBook = await prisma.book.findFirst({
-    where: { isFeatured: true, publishStatus: 'PUBLISHED' },
-    include: {
-      genres: { include: { genre: true } },
-      chapters: {
-        orderBy: { chapterNumber: 'asc' },
-        take: 3,
-        select: { id: true, chapterNumber: true, title: true, wordCount: true },
-      },
-    },
-  });
-
-  // 2. Danh sách truyện nổi bật tuyển chọn
-  const popularBooks = await prisma.book.findMany({
-    where: { publishStatus: 'PUBLISHED' },
-    take: 6,
-    orderBy: { readCount: 'desc' },
-    include: {
-      genres: { include: { genre: true } },
-      chapters: { select: { id: true } },
-    },
-  });
-
-  // 3. Mới cập nhật
-  const latestBooks = await prisma.book.findMany({
-    where: { publishStatus: 'PUBLISHED' },
-    take: 4,
-    orderBy: { updatedAt: 'desc' },
-    include: {
-      genres: { include: { genre: true } },
-      chapters: {
-        orderBy: { chapterNumber: 'desc' },
-        take: 1,
-        select: { chapterNumber: true, title: true, updatedAt: true },
-      },
-    },
-  });
-
-  // 4. Truyện đã hoàn thành
-  const completedBooks = await prisma.book.findMany({
-    where: { status: 'COMPLETED', publishStatus: 'PUBLISHED' },
-    take: 4,
-    include: {
-      genres: { include: { genre: true } },
-    },
-  });
-
-  // 5. Thể loại
-  const genres = await prisma.genre.findMany({
-    take: 12,
-    include: {
-      _count: { select: { books: true } },
-    },
-  });
+  const [user, featuredBook, popularBooks, latestBooks, completedBooks, genres] =
+    await Promise.all([
+      getCurrentUser(),
+      // Independent homepage queries run together to avoid adding each DB round trip.
+      prisma.book.findFirst({
+        where: { isFeatured: true, publishStatus: 'PUBLISHED' },
+        include: {
+          genres: { include: { genre: true } },
+          chapters: {
+            orderBy: { chapterNumber: 'asc' },
+            take: 3,
+            select: { id: true, chapterNumber: true, title: true, wordCount: true },
+          },
+        },
+      }),
+      prisma.book.findMany({
+        where: { publishStatus: 'PUBLISHED' },
+        take: 6,
+        orderBy: { readCount: 'desc' },
+        include: {
+          genres: { include: { genre: true } },
+          chapters: { select: { id: true } },
+        },
+      }),
+      prisma.book.findMany({
+        where: { publishStatus: 'PUBLISHED' },
+        take: 4,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          genres: { include: { genre: true } },
+          chapters: {
+            orderBy: { chapterNumber: 'desc' },
+            take: 1,
+            select: { chapterNumber: true, title: true, updatedAt: true },
+          },
+        },
+      }),
+      prisma.book.findMany({
+        where: { status: 'COMPLETED', publishStatus: 'PUBLISHED' },
+        take: 4,
+        include: {
+          genres: { include: { genre: true } },
+        },
+      }),
+      prisma.genre.findMany({
+        take: 12,
+        include: {
+          _count: { select: { books: true } },
+        },
+      }),
+    ]);
 
   // 6. Lịch sử đọc dở
   let recentProgress = null;
