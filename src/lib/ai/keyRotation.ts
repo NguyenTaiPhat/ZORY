@@ -155,44 +155,47 @@ export async function getNextRotatedKey(
     });
 
     // 2. Tìm danh sách các key khả dụng thuộc các Album đang kích hoạt
-    const candidateKeys = await prisma.apiKeyPool.findMany({
-      where: {
-        provider,
-        isActive: true,
-        status: { in: ['ACTIVE', 'UNTESTED'] },
-        album: {
-          isActive: true,
-        },
-        id: { notIn: excludeKeyIds },
-      },
-      orderBy: [
-        { lastUsedAt: 'asc' }, // Ưu tiên key ít dùng gần nhất (Round-robin)
-        { requestCount: 'asc' }, // Cân bằng số lượng request
-      ],
-      take: 1,
-      select: {
-        id: true,
-        key: true,
-        name: true,
-      },
-    });
+    // Select and reserve atomically. Serializable transactions prevent parallel
+    // requests from all reading the same least-used key before any can update it.
+    // Retry serialization conflicts, which are expected under concurrent traffic.
+    for (let retry = 0; retry < 4; retry++) {
+      try {
+        return await prisma.$transaction(async (tx) => {
+          const selected = await tx.apiKeyPool.findFirst({
+            where: {
+              provider,
+              isActive: true,
+              status: { in: ['ACTIVE', 'UNTESTED'] },
+              album: { isActive: true },
+              id: { notIn: excludeKeyIds },
+            },
+            // Keep total usage balanced first, then rotate among equally used keys.
+            orderBy: [
+              { requestCount: 'asc' },
+              { lastUsedAt: 'asc' },
+              { createdAt: 'asc' },
+            ],
+            select: { id: true, key: true, name: true },
+          });
 
-    if (candidateKeys.length === 0) {
-      return null;
+          if (!selected) return null;
+
+          await tx.apiKeyPool.update({
+            where: { id: selected.id },
+            data: {
+              requestCount: { increment: 1 },
+              lastUsedAt: new Date(),
+            },
+          });
+
+          return selected;
+        }, { isolationLevel: 'Serializable' });
+      } catch (error: any) {
+        if (error?.code !== 'P2034' || retry === 3) throw error;
+      }
     }
 
-    const selected = candidateKeys[0];
-
-    // Cập nhật lượt gọi và thời gian sử dụng
-    await prisma.apiKeyPool.update({
-      where: { id: selected.id },
-      data: {
-        requestCount: { increment: 1 },
-        lastUsedAt: new Date(),
-      },
-    });
-
-    return selected;
+    return null;
   } catch (error) {
     console.error('[KeyRotation] Error selecting rotated key:', error);
     return null;
